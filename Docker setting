@@ -1,0 +1,309 @@
+Docker安装要求
+需要64位操作系统
+至少要RHEL6.5以上版本
+关闭Firewall
+
+创建Docker的yum源
+docker-engine-1.12.1-1.el7.centos.x86_64.rpm
+docker-engine-selinux-1.12.1-1.el7.centos.noarch.rpm
+createrepo .
+
+vi gzqstca.repo
+[docker]
+name=docker
+baseurl=ftp://...***
+enabled=1
+gpgcheck=0
+
+yum search docker
+yum -y install docker-engine
+
+
+systemctl enable docker
+systemctl start docker
+
+采用后端存储 cow copy of write
+ifconfig 查看
+docker images 查看当前机器有的镜像
+
+Docker hub 镜像仓库
+http://hub.docker.com
+Docker官方提供公共镜像的仓库（Registry）
+
+docker search rhel7
+docker search centos
+docker search nginx
+docker search mysql
+
+docker pull 下载
+docker push 上传
+
+docker search busybox
+docker pull busybox
+
+例：
+docdocker help push
+
+导入镜像
+docker load < ***.tar
+docker imagers
+
+导出镜像
+docker images
+docker save image_name > ***.tar
+
+docker save busybox（名称）:*******(唯一的tag name) > busybox.tar
+scp busybox.tar docker2:./
+docker2 ~]# docker load < busybox.tar
+
+lftp 192.168.1.254
+ls
+cd public/
+get docker_images.zip
+bye
+
+unzip docker_images.zip
+cd docker_images
+for i in *
+do
+docker load < $i
+done
+
+启动镜像
+启动centos镜像生成一个容器
+docker images
+docker run -it centos bash
+
+开启另一个终端（查看容器信息）
+docker ps
+
+创建启动窗口的命令
+docker run -it 镜像的名称：镜像的标签 [启动命令]
+latest是默认标签
+docker run -it centos:latest cmd
+等同  docker run -it centos cmd
+
+查看详细信息
+docker inspect 镜像的名称：镜像的标签
+
+cat >/etc/yum.repos.d/centos.repo <<EOF
+[centos]
+name=centos
+baseurl=ftp://192.168.1.254/centos
+enabled=1
+gpgcheck=0
+
+EOF
+
+
+docker run -it centos (默认命令 /bin/bash)
+
+1 容器退出以后，我怎么能进入原来的容器
+  容器在我们退出以后就关闭了，如果想进入原来的容器需要重新启动那个容器
+2 为什么有的容器不加启动命令就起不来
+  因为是启动容器是默认命令是非交互命令
+3 启动参数 -it 是干什么用的？
+  -i 是表示交互式
+  -t 是表示终端
+  -d 后台进程
+4 redis 系统为什么是空的？
+  不是空的
+5 怎么查看系统中有几个容器
+  在另一个终端查看
+6 怎么管理这些容器
+  用docker 相关命令
+
+debian	VS	redhat
+dpkg		rpm
+apt-get 	yum
+
+镜像的常用命令
+docker images
+docker history
+docker inspect	查看镜像底层信息
+docker pull
+docker push
+docker rmi	删除本地镜像
+docker save
+docker load
+docker search
+docker tag 	修改镜像名称和标签
+例：docker tag 8c811b1b434e（IMAGE ID） nsd1802:latest
+    docker tag nsd1802:latest	aabb:v1
+
+命令列表
+docker run	运行容器
+docker ps	查看容器列表	例：docker ps -a;docker ps -aq查看所有开启未开启的容器
+docker stop	关闭容器
+docker start	启动容器	
+docker restart	重启容器
+docker attach|exec	进入容器	
+例：docker exec -it de4422d8f28d /bin/bash
+    docker attach de4422d8f28d	(不用跟交互命令，如果该容器是后台运行，就挂那不动了，退出后容器会被关闭退出，后期进入必需先docker start de4422d8f28d，处理的办法ctrl长按，按下p,在按下q将容器放至后台)
+
+ctrl+z	将当前执行任务放置后台，并且暂停
+bg	将一个在后台暂停的命令，变成继续执行
+fg	将后台中的命令调至前台继续运行
+jobs	查看当前有多少在后台运行的命令
+rpm -ql docker-engine	软件包列表信息
+rpm -qi docker-engine	软件包信息
+rpm -qc docker-engine   软件包配置信息
+docker inspect	查看容器底层信息
+docker top	查看容器进程列表
+docker rm	删除容器	例：docker rm 4156a9a56274
+
+docker rm $(docker ps -aq)	支持函数重入
+删除容器前，容器必需是停止的状态
+
+ss -ltun	查看正在使用的端口
+docker run -p 物理机端口：容器端口(绑定)
+例：docker run -d -p 80:80 nginx
+修改nginx的默认主页
+
+docker ps	查看nginx的容器ID号
+docker exec -it 04190a427b25 /bin/bash
+nginx -h	查看nginx的帮助信息
+nginx -T	查看nginx的配置信息，并且输出
+
+cd /usr/share/nginx/html
+echo "HELLO NSD1802">index.html
+
+==========================================================================================
+自定义镜像：
+docker ps -a	查看然后删除所有的镜像
+docker run -itd centos
+docker ps -a
+docker exec -it 4c702686e2f /bin/bash
+rm -rf /etc/yum.repos.d/*
+cat > /etc/yum.repos.d/centos.repo <EOF
+[centos]
+name=centos
+baseurl=ftp://192.168.1.254/pub/centos
+enabled=1
+gpgcheck=0
+
+EOF
+yum -y install net-tools vim-enhanced iproute bash-completion psmisc
+exit
+docker ps -a
+docker commit 4c702686e2f mycentos:latest	配置完成以后，停止容器。手动把自己配置的容器制作成镜像
+docker images
+docker rm 4c	删除之前的自己配置的原始容器
+==========================================================================================
+Dockerfile
+-FROM:基础镜像
+-MAINTAINER：	镜像创建者信息
+-EXPOSE：	开放的端口
+-ENV:		设置变量
+-ADD：		复制文件到镜像
+-RUN：		制作镜像时执行的命令，可以有多个
+-WORKDIR：	定义容器默认工作目录
+-CMD：		容器启动时执行的命令，仅可以有一条CMD
+
+==========================================================================================
+mkdir aabb
+cd aabb
+vim Dockerfile
+FROM mycentos:latest
+RUN rm -rf /etc/yum.repos.d/*	在容器内运行命令
+ADD centos.repo /etc/yum.repos.d/centos.repo	centos.repo必需放在当前目录下
+RUN yum -y install net-tools vim-enhanced iproute bash-completion psmisc
+
+docker build -t createos:latest .	创建Dockerfile文件，后面的.是指向当前目录
+
+例：
+mkdir bbcc
+cd bbcc 
+vim Dockerfile
+FROM mycentos:latest
+CMD ["/usr/bin/python"]		修改默认启动命令
+
+docker build -t createos:python .
+
+==========================================================================================
+history -c
+history -w
+例：安装启用ssh这个服务
+
+docker run -itd mycentos
+yum seach ssh
+yum -y install openssh-server
+echo "123456"|passwd --stdin root
+因为docker是在linux下直接创建，所以无法使用systemctl start sshd
+cd /usr/lib/systemd/system
+cat sshd.service
+EnvironmentFile=/etc/sysconfig/sshd	环境变量声明
+ExecStart=/usr/sbin/sshd -D $OPTIONS
+
+ExecStart=/usr/sbin/sshd -D	会报错
+cd /etc/ssh
+sshd-keygen
+ExecStart=/usr/sbin/sshd -D
+
+which sshd-keygen
+/usr/sbin/sshd-keygen
+history
+exit
+
+mkdir abc
+cd abc 
+vim Dockerfile
+FROM mycentos:latest
+RUN yum -y install openssh-server
+RUN echo "123456"|passwd --stdin root
+ENV EnvironmentFile=/etc/sysconfig/sshd
+RUN /usr/sbin/sshd-keygen
+EXPOSE 22
+CMD ["/usr/sbin/sshd", "-D"]
+
+docker build -t mycentos:sshd .
+
+docker run -d -p 1022:22 mycentos:sshd	
+==========================================================================================
+docker run -itd mycentos
+which httpd
+yum -y install httpd
+echo "Hello world!">/var/www/html/index.html
+cat /etc/sysconfig/httpd
+/usr/sbin/httpd $OPTIONS -DFOREGROUND
+
+/usr/sbin/httpd -DFOREGROUND
+history
+exit
+
+vim Dockerfile
+FROM mycentos:latest
+RUN yum -y install httpd
+ENV EnvironmentFile=/etc/sysconfig/httpd
+WORKDIR /var/www/html
+RUN echo "Hello world">index.html
+EXPOSE 80
+CMD ["/usr/sbin/httpd", "-DFOREGROUND"]
+
+docker build -t mycentos:httpd .
+
+docker run -d -p 8888:22 mycentos:httpd
+==========================================================================================
+例：在sshd的镜像上填加httpd
+ 
+vim Dockerfiles
+FROM mycentos:sshd
+RUN yum -y install httpd
+ENV EnvironmentFile=/etc/sysconfig/httpd
+WORKDIR /var/www/html
+RUN echo "Hello world!">index.html
+EXPOSE 22
+EXPOSE 80
+ADD run.sh /etc/init.d/run.sh
+CMD ["/etc/init.d/run.sh"]
+
+vim run.sh
+#!/bin/bash
+/usr/sbin/sshd -D &
+/usr/sbin/httpd -DFOREGROUND
+
+chmod +x run.sh
+
+docker build -t mycentos:sshdhttpd .
+
+docker run -d -p 8888:80 -p 1022:22 mycentos:sshdhttpd
