@@ -1,0 +1,230 @@
+版本控制
+
+脚本|配置文件|笔记|文档
+ 
+如何管理多个版本
+如何多人协作
+
+subversion(svn),git
+
+
+yum -y install subversion
+mkdir /var/svn
+svnadmin create /var/svn/project
+cd /usr/lib/systemd/system
+#ls *httpd*
+#ll -R|wc -l
+du -sh /var/svn/project/
+svn import . file:///var/svn/project -m "gzqstca code"
+du -sh /var/svn/project/
+
+cd /var/svn/project/conf
+
+[root@web1 conf]# ls
+authz  passwd  svnserve.conf  (从右往左改)
+
+vim svnserve.conf
+set nu (19,20,27,34)顶格去掉注释
+19 anon-access = none 	（匿名用户权限为空）
+20 auth-access = write	（登录用户权限为写）
+27 password-db = passwd	（登录用户信息在那）
+34 authz-db = authz
+
+vim passwd
+user1 = 123456
+user2 = 123456
+user3 = 123456	(添加用户密码)
+
+vim authz
+
+[/]		(针对/var/svn/project目录)
+user1 = rw	user1用读写权限
+user2 = r	user2有读权限
+* =		其它user3无任何权限
+
+#1[root@web1 conf]# svnserve -d（不加-d相当于&会放置后台） -r（指定共享目录） /var/svn/project  （针对/var/svn/project仓库目录启服务）
+#2[root@web1 conf]# svnserve -d	（启用所有共享仓库）
+[root@web1 conf]# ss -antupl|grep svnserve
+tcp    LISTEN     0      7         *:3690                  *:*                   users:(("svnserve",pid=3856,fd=3))
+
+客户端：
+#1 svn://192.168.2.100
+#2 svn://192.168.2.100/var/svn/project
+
+
+
+[root@web2 /]# svn --username user1 --password 123456 co svn://192.168.2.100/ /gaocode 	（只需要做一次co操作就可以,之后用svn update代替）
+[root@web2 gaocode]# vim abrt-ccpp.service
+[root@web2 gaocode]# svn ci -m "gzqstca user"
+正在发送       abrt-ccpp.service
+传输文件数据.
+提交后的版本为 2。
+[root@web2 gaocode]# rm -rf ./*
+[root@web2 gaocode]# svn update
+
+
+[root@web2 gaocode]# svn info svn://192.168.2.100
+路径: .
+URL: svn://192.168.2.100
+版本库根: svn://192.168.2.100
+版本库 UUID: 3e9ee830-3612-4b11-bbba-8154904aea09
+版本: 2
+节点种类: 目录
+最后修改的作者: user1
+最后修改的版本: 2
+最后修改的时间: 2018-05-11 11:23:17 +0800 (五, 2018-05-11)
+
+
+
+[root@web2 gaocode]# svn log svn://192.168.2.100
+------------------------------------------------------------------------
+r2 | user1 | 2018-05-11 11:23:17 +0800 (五, 2018-05-11) | 1 行
+
+gzqstca user
+------------------------------------------------------------------------
+r1 | root | 2018-05-11 10:29:06 +0800 (五, 2018-05-11) | 1 行
+
+gzqstca code
+------------------------------------------------------------------------
+
+
+[root@web2 gaocode]# echo "I AM KING"> test.txt
+[root@web2 gaocode]# svn add test.txt 
+A         test.txt
+[root@web2 gaocode]# svn ci -m "gzqstca test"
+正在增加       test.txt
+传输文件数据.
+提交后的版本为 3。
+
+[root@web2 gaocode]# echo "Hello world"> test2.txt
+[root@web2 gaocode]# svn add test2.txt 
+A         test2.txt
+[root@web2 gaocode]# svn ci -m "gzqstca test2"
+正在增加       test2.txt
+传输文件数据.
+提交后的版本为 4。
+
+[root@web2 gaocode]# svn delete test.txt test2.txt 
+D         test.txt
+D         test2.txt
+[root@web2 gaocode]# svn ci -m "gzqstca delete"
+正在删除       test.txt
+正在删除       test2.txt
+
+提交后的版本为 5。
+
+
+[root@web2 gaocode]# svn diff
+Index: test.txt
+===================================================================
+--- test.txt	(版本 2)
++++ test.txt	(工作副本)
+@@ -1 +0,0 @@
+-HELLO WORLD
+[root@web2 gaocode]# svn cat svn://192.168.2.100/test.txt
+HELLO WORLD
+
+
+[root@web2 gaocode]# sed -i 'd' tmp.mount 			修改源文件，逐行读入，并删除内容
+[root@web2 gaocode]# cat tmp.mount 				显示无内容
+[root@web2 gaocode]# svn revert tmp.mount 			svn 恢复文件内容
+已恢复“tmp.mount”
+
+
+[root@web2 gaocode]# svn ci -m "gzqstca XX"
+正在删除       test.txt
+
+提交后的版本为 7。
+[root@web2 gaocode]# svn merge -r7:1 tmp.mount
+--- 记录反向合并 r7，经由 r2，到“tmp.mount”的信息:
+ U   tmp.mount
+--- 正在从 'tmp.mount' 删除合并信息:
+ U   tmp.mount
+
+[root@web2 r1code]# svn -r1 co svn://192.168.2.100 /r1code	还原至r1版本至根目录/r1code
+
+
+[root@web1 user2code]# svnadmin dump /var/svn/project > /root/project.bak		(备份 svn仓库数据)
+* 已转存版本 0。
+* 已转存版本 1。
+* 已转存版本 2。
+* 已转存版本 3。
+* 已转存版本 4。
+* 已转存版本 5。
+* 已转存版本 6。
+* 已转存版本 7。
+* 已转存版本 8。
+* 已转存版本 9。
+* 已转存版本 10。
+* 已转存版本 11。
+* 已转存版本 12。
+
+[root@web1 user2code]# mkdir /gzqstca
+[root@web1 user2code]# svnadmin create /gzqstca/project
+[root@web1 user2code]# svnadmin load /gzqstca/project < /root/project.bak
+[root@web1 project]# svnadmin load /var/svn/project/ < /root/project.bak
+
+TortoiseSVN 		#windows版本
+
+www.github.com
+Gzqstca0571
+
+http://www.github.com/Gzqstca0571/gzqstca
+
+
+制作RPM包
+yum -y install  rpm-build
+rpm -qi httpd
+
+
+[root@web1 ~]# rpmbuild -ba nginx.spec
+错误：stat /root/nginx.spec 失败：没有那个文件或目录
+[root@web1 ~]# ls /root/rpmbuild
+BUILD  BUILDROOT  RPMS  SOURCES  SPECS  SRPMS
+
+[root@web1 SOURCES]# cp /root/lnmp_soft/nginx-1.12.2.tar.gz /root/rpmbuild/SOURCES/
+[root@web1 SOURCES]# ls
+nginx-1.12.2.tar.gz
+[root@web1 SOURCES]# cd ..
+[root@web1 rpmbuild]# cd SPECS/
+[root@web1 SPECS]# vim ./nginx.spec
+
+
+Name:nginx
+Version:1.12.2
+Release:1
+Summary:This is a web server.
+
+#Group:         
+License:GPL
+URL:www.gzqstca.cn
+Source0:nginx-1.12.2.tar.gz
+
+#BuildRequires:gcc pcre-devel openssl-devel
+#Requires:      
+
+%description
+This is a web server toooooooooo!
+
+%prep
+%setup -q		（解包并cd至目录）
+
+
+%build
+./configure
+make %{?_smp_mflags}
+
+
+%install
+make install DESTDIR=%{buildroot}
+
+
+%files
+%doc
+/usr/local/nginx/*
+
+
+%changelog
+
+
+[root@web1 SPECS]# rpmbuild -ba nginx.spec
