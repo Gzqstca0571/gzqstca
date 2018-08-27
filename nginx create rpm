@@ -1,0 +1,36 @@
+[root@node105 rpmbuild]# tree .
+.
+├── SOURCES
+│   ├── conf.patch
+│   ├── myconf.patch
+│   ├── nginx-1.10.3.tar.gz
+│   └── nginx.service
+└── SPECS
+    └── nginx.spec
+
+
+yum -y install gcc gcc-c++ make automake pkgconfig
+[root@node105 SPECS]# pwd
+/root/rpmbuild/SPECS
+[root@node105 SPECS]# vim nginx.spec
+
+[root@node105 SPECS]# yum -y install rpm-build-4.11.3-25.el7.x86_64
+
+[root@node105 SPECS]# yum -y install zlib-devel lua-devel openssl-devel nss-devel
+[root@node105 SPECS]# rpmbuild -bb nginx.spec
+____________________________________________________________________________
+
+wget ftp://176.19.7.250/2017/software/lnmp_soft.tar.gz
+tar -xf lnmp_soft.tar.gz
+tar -xf nginx-1.12.2.tar.gz
+cd nginx-1.12.2/
+yum -y install gcc gcc-c++ make automake pkgconfig
+./configure
+
+[root@node106 lnmp_soft]# cp nginx-1.12.2.tar.gz ./nginx-1.12.2/
+yum -y install rpm-build-4.11.3-25.el7.x86_64
+yum -y install zlib-devel lua-devel openssl-devel nss-devel
+[root@node106 SPECS]# mkdir -p /root/rpmbuild/SOURCES/
+[root@node106 SPECS]# mv nginx.spec /root/rpmbuild/SPECS/
+[root@node106 SPECS]# mv nginx-1.12.2.tar.gz /root/rpmbuild/SOURCES/
+[root@node106 SPECS]# rpmbuild -bb nginx.spec
