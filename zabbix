@@ -1,0 +1,147 @@
+iptables -t 表名 -I/-A/-D/-F/-P 链名 -s/-d/				-j ACCEPT/DROP/REJECT/SNAT/MASQUERAADE
+					-p	tcp	--dport/--sport
+						upd
+						icmp
+						-i/-o eth* (in,out)
+filter
+nat 
+mangle	标记
+raw	监控
+
+INPUT	目的IP防火墙
+OUTPUT	源IP是防火墙
+FORWARD
+
+nat:
+POSTROUTING
+SNAT/MASQUERADE		路由后将源IP地址转化成新的IP地址，内外网的IP转换
+
+-m mac
+-m multiport
+-m iprange
+
+
+service iptables save	保存当前规则至/etc/sysconfig/iptables
+systemctl enabled iptables	开机自动加载iptables规则
+
+cat /proc/cpuinfo |grep proc
+
+
+yum -y install php php-mysql mariadb mariadb-devel mariadb-server
+yum -y  install  php-fpm-5.4.16-42.el7.x86_64.rpm
+./configure --with-http_ssl_module
+make && make install
+
+
+
+http{
+… …
+    fastcgi_buffers 8 16k;                      //缓存php生成的页面内容，8个16k
+    fastcgi_buffer_size 32k;                      //缓存php生产的头部信息
+    fastcgi_connect_timeout 300;                 //连接PHP的超时时间
+    fastcgi_send_timeout 300;                     //发送请求的超时时间
+    fastcgi_read_timeout 300;                        //读取请求的超时时间
+
+
+
+[root@proxynew lnmp_soft]# yum -y install  net-snmp-devel curl-devel 
+[root@proxynew lnmp_soft]# yum -y install libevent-devel-2.0.21-4.el7.x86_64.rpm
+
+[root@proxynew zabbix-3.4.4]# ./configure --enable-server --enable-proxy  --enable-agent --with-mysql=/usr/bin/mysql_config  --with-net-snmp --with-libcurl
+
+[root@proxynew zabbix-3.4.4]# cd /root/lnmp_soft/zabbix-3.4.4/database/mysql/
+[root@proxynew mysql]# useradd -r -s /sbin/nologin -N zabbix
+-r 系统用户
+-N 不创建家目录
+[root@proxynew mysql]# mysql -uroot -p123456 zabbix < schema.sql
+[root@proxynew mysql]# mysql -uroot -p123456 zabbix < images.sql 
+[root@proxynew mysql]# mysql -uroot -p123456 zabbix < data.sql
+
+
+
+[root@proxy zabbix-3.4.4]# yum provides /usr/bin/mysql_config
+[root@proxy zabbix-3.4.4]# rpm -qa|grep snmp
+
+MariaDB [(none)]> drop database zabbix;
+MariaDB [zabbix]> show tables;
+
+
+
+[root@proxynew mysql]# cd /root/lnmp_soft/zabbix-3.4.4/frontends/php
+[root@proxynew php]# cp -r * /usr/local/nginx/html/
+[root@proxynew php]# chmod -R 777 /usr/local/nginx/html/*
+
+
+[root@proxy etc]# vim /usr/local/etc/zabbix_server.conf
+ 38 LogFile=/tmp/zabbix_server.log
+ 85 DBHost=localhost
+ 95 DBName=zabbix
+111 DBUser=zabbix
+119 DBPassword=zabbix
+
+[root@proxy etc]# tail /tmp/zabbix_server.log
+[root@proxy ~]# ps -ef |grep zabbix
+[root@proxy ~]# vim /usr/local/etc/zabbix_agentd.conf
+ 30 LogFile=/tmp/zabbix_agentd.log
+ 93 Server=127.0.0.1,192.168.2.5	监控端服务器
+134 ServerActive=127.0.0.1,192.168.2.5	主动监控服务器
+145 Hostname=proxy
+280 UnsafeUserParameters=1		允许自定义监控项
+
+:!hostname
+
+[root@proxy ~]# zabbix_agentd
+http://192.168.2.5/setup.php
+[root@proxy ~]# yum -y install php-gd php-xml
+[root@proxy lnmp_soft]# yum install php-bcmath-5.4.16-42.el7.x86_64.rpm
+[root@proxy lnmp_soft]# yum install php-mbstring-5.4.16-42.el7.x86_64.rpm
+[root@proxyserver lnmp_soft]# vim /etc/php.ini
+
+ 384 max_execution_time = 300
+ 394 max_input_time = 300
+ 672 post_max_size = 16M
+ 878 date.timezone = Asia/shanghai
+
+[root@proxy lnmp_soft]# systemctl restart php-fpm
+[root@proxy lnmp_soft]# zabbix_get -s 192.168.2.100 -k system.cpu.load[percpu,avg5]
+
+
+
+[root@web1 core]# useradd -r -s /sbin/nologin -N zabbix
+[root@web1 core]# pwd
+/root/lnmp_soft/zabbix-3.4.4/misc/init.d/fedora/core
+[root@web1 core]# cp zabbix_agentd /etc/init.d
+
+
+[root@web1 ~]# useradd -s /sbin/nologin  zabbix
+[root@web1 ~]# yum -y install gcc pcre-devel
+[root@web1 ~]# tar -xf zabbix-3.4.4.tar.gz 
+[root@web1 ~]# cd zabbix-3.4.4/
+[root@web1 zabbix-3.4.4]# ./configure --enable-agent
+[root@web1 zabbix-3.4.4]# make && make install 
+
+[root@web1 core]# service zabbix_agentd status 
+Unit zabbix_agentd.service could not be found.
+[root@web1 core]# /etc/init.d/zabbix_agentd start
+Reloading systemd:                                         [  确定  ]
+Starting zabbix_agentd (via systemctl):                    [  确定  ]
+
+[root@web1 core]# vim /usr/local/etc/zabbix_agentd.conf
+ 69 EnableRemoteCommands=1
+ 93 Server=127.0.0.1,192.168.2.5
+134 ServerActive=127.0.0.1,192.168.2.5
+145 Hostname=web1
+280 UnsafeUserParameters=1
+
+[root@web1 core]# /etc/init.d/zabbix_agentd restart
+Restarting zabbix_agentd (via systemctl):                  [  确定  ]
+[root@web1 core]# service zabbix_agentd restart 
+Restarting zabbix_agentd (via systemctl):                  [  确定  ]
+
+
+[root@web1 core]# vim /usr/local/etc/zabbix_agentd.conf
+264 Include=/usr/local/etc/zabbix_agentd.conf.d/	定义配置文件保存目录
+[root@client2 core]# cd /usr/local/etc/zabbix_agentd.conf.d/
+
+[root@web1 zabbix_agentd.conf.d]# vim user.num
+  1 UserParameter=user.num,wc -l /etc/passwd|awk '{print $1}'
