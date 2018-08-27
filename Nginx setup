@@ -1,0 +1,30 @@
+#!/bin/bash
+yum -y install gcc pcre-devel openssl-devel	#nginx安装依赖包
+systemctl stop httpd
+systemctl disable httpd
+useradd -s /sbin/nologin nginx 			#创建一个无登陆权限的用户nginx
+tar -xf /root/nginx-1.10.3.tar.gz
+cd /root/nginx-1.10.3
+./configure \
+--prefix=/usr/local/nginx \
+--user=nginx \
+--group=nginx \
+--with-http_ssl_module				#安装ssl加密功能模块
+make&make install
+ln -s /usr/local/nginx/sbin/nginx /sbin/	#创建nginx的快捷方式
+tar -xf /root/nginx-1.12.2.tar.gz		#升级nginx版本
+cd /root/nginx-1.12.2
+./configure \
+--prefix=/usr/local/nginx \
+--user=nginx \
+--group=nginx \
+--with-stream \
+--with-http_ssl_module 
+make						#只是编译二进制文件
+mv /usr/local/nginx/sbin/nginx /usr/local/nginx/sbin/nginx.bak #备份老版本程序
+cp /objs/nginx /usr/local/nginx/sbin/
+make upgrade					#用新的程序替代老的程序
+#nginx -v					#查看nginx的版本	
+#yum -y install httpd-tools
+#htpasswd -c /usr/local/nginx/pass jack
+#htpasswd /usr/local/nginx/pass lucy
