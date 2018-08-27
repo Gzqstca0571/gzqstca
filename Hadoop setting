@@ -1,0 +1,685 @@
+Hadoop是一种分析和处理海量数据的软件平台
+Hadoop是一款开源软件，使用JAVA开发
+Hadoop可以提供一个分布式基础架构
+
+Hadoop特点
+高可靠性，高扩展性，高效性，高容错性，低成本
+
+Hadoop组件
+HDFS 		分布式文件系统
+Mapreduce 	分布式计算框架
+Hbase		分布式列存数据库
+Hive		基于Hadoop的数据仓库
+Pig		基于Hadoop的数据流系统
+YARN 		集群资源管理系统
+Zookeeper 	分布式协作服务
+Flume 		日志收集工具
+Sqoop 		数据库ETL同步工具
+Mahout		数据挖掘算法库
+
+HDFS角色及概念
+是Hadoop体系中数据存储管理的基础。它是一个高度容错的系统，用于在低成本的通用硬件上运行。
+
+角色及概念
+Client		切分文件
+		访问HDFS
+		与NameNode交互，获取文件位置信息
+		与DataNode交互，读取和写入数据
+
+Namenode	Master节点，管理HDFS的名称空间和数据块映射信息，配置副本策略，处理所有客户端请求。
+
+Secondarynode	定期合并fsimage和fsedits，推送给NameNode
+		紧急情况下，可以辅助NameNode
+		但Secondarynode并非NameNode的热备
+
+Datanode	数据存储节点，存储实际的数据
+		汇报存储信息给NameNode
+
+Block		每块缺省64MB大小
+		每块可以多个副本
+
+存储过程
+HDFS Client	将文件按固定大小切分成数据，去询问NameNode，获取到数据存储的DateNode地址
+DataNode	存储数据节点，会向NameNode发送fsimage(数据存储信息),fsedits（数据变更日志）
+NameNode	存储fsiamge,fsedits
+Secondarynode	定期从NameNode下载fsimage,fsedits更进行数据整合更新，并回传NameNode
+
+MapReduce	分布式计算框架
+源自于google的MapReduce论文，JAVA实现的分布式计算框架
+
+角色和概念
+JobTracker	Master节点，只有一个
+		管理所有作业
+		作业/任务的监控，错误处理等
+
+TaskTracker	Slave节点，一般是多台
+		运行Map Task和Reduce Task
+		并与JobTracker交互，汇报任务状态
+	
+Map Task	解释每条数据记录，传递给用户编写的map(),并执行，将输出结果写入本地磁盘（如果为map-only作业，直接写入HDFS）
+
+Reducer Task	从Map Task的执行结果中，远程读取输入数据，对数据进行排序，将数据按照分组传递给用户编写的reduce函数执行
+
+
+Yarn角色及概念
+
+ResourceManager
+处理客户端请求
+启动/监控ApplicationMaster
+监控NodeManager
+资源分配与调度
+
+NodeManager
+单个节点上的资源管理
+处理来自REsourceManager的命令
+处理来自ApplicationMaster的命令
+
+Container
+对任务运行环境的抽象，封装了CPU,内存等
+多维资源以及环境变量，启动命令等任务运行相关的信息资源分配与调度
+
+ApplicationMaster
+数据切分
+为应用程序申请资源，并分配给内部任务
+任务监控与容错
+
+Client
+用户与YARN交互的客户端程序
+提交应用程序，监控应用程序状态，杀死应用程序等
+
+=========================================================================================
+
+Hadoop安装配置
+Hadoop的部署模式有三种
+
+单机
+
+伪分布式
+
+完全分布式
+
+Hadoop单机模式安装配置
+准备一台2G内存虚拟机，关闭selinux,firewalld
+JAVA 版本180
+
+Hadoop的单机模式安装非常简单
+1 获取软件
+http://hadoop.apache.org
+
+2 安装配置java环境，安装jps工具
+安装Openjdk和openjdk-devel
+
+3 设置环境变量，启动运行
+hadoop-env.sh
+  JAVA_HOME= ""
+
+yum -y install java-1.8.0-openjdk-devel 
+java -version
+jps
+
+tar -xf hadoop-2.7.6.tar.gz
+mv hadoop-2.7.6 /usr/local/hadoop
+
+
+伪分布式
+
+cd /usr/local/hadoop
+./bin/hadoop version			会有个java默认路径的设置报错
+vim etc/hadoop/hadoop/hadoop-env.sh
+	export JAVA_HOME=${JAVA_HOME}
+	export HADOOP_CONF_DIR=${HADOOP_CONF_DIR:-"/etc/hadoop"}
+rpm -ql java-1.8.0-openjdk
+	/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.131-11.b12.el7.x86_64/jre/......
+vim etc/hadoop/hadoop/hadoop-env.sh
+	export JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.131-11.b12.el7.x86_64/jre
+	export HADOOP_CONF_DIR=/usr/local/hadoop/etc/hadoop
+cd /usr/local/hadoop
+./bin/hadoop version
+
+测试：把当前目录下的文本文件拷贝至新建目录aabb内,统计文本文件中热词出现的频率
+mkdir aabb
+cp *.txt aabb/
+cd aabb
+bin/hadoop jar share/hadoop/mapreduce/hadoop-mapreduce-examples-2.7.6.jar wordcount aabb xx1
+cd xx1
+==========================================================================================
+
+Hadoop伪分布式
+Hadoop-env.sh
+	JAVA_HOME
+	HADOOP_CONF_DIR
+Xml文件配置格式
+     <property>
+	<name>关键字</name>
+	<value>变量值根据需要变更</value>
+	<description>描述行可删除</description>
+     </property>
+
+cd /usr/local/hadoop/etc/hadoop		存放所有的Hadoop的核心配置文件
+core-site.xml
+hdfs-site.xml
+cp mapred-site.xml.template mapred-site.xml
+yarn-site.xml
+
+vim core-site.xml
+
+<configuration>
+     <property>
+	<name>关键字</name>
+	<value>变量值根据需要变更</value>
+	<description>描述行可删除</description>
+     </property>
+     <property>
+	<name>关键字</name>
+	<value>变量值根据需要变更</value>
+	<description>描述行可删除</description>
+     </property> 
+</configuration>
+
+关键字，变量值的取值来源官方网站
+hadoop.apache.org
+
+左边的菜单-Documentation-选择Release版本
+cd /usr/local/hadoop
+./bin/hadoop version	查看hadoop版本
+
+选择最接近的版本
+Release 2.7.6
+->Configuration->core-default.xml(core-site.xml)->
+->Configuration->hdfs-default.xml(hdfs-site.xml)->
+->Configuration->mapred-default.xml(mapred-site.xml)->
+->Configuration->yarn-default.xml(yarn-site.xml)->
+
+完全分布式
+192.168.1.10	NameNode,SecondaryNameNode,ResourceManager	HDFS,YARN	master
+192.168.1.11	DataNode,NodeManager				HDFS,YARN	node1
+192.168.1.12	DataNode,NodeManager				HDFS,YARN	node2
+192.168.1.13	DataNode,NodeManager				HDFS,YARN	node3
+
+yum -y install java-1.8.0-openjdk-devel 
+tar -xf hadoop-2.7.6.tar.gz
+mv hadoop-2.7.6 /usr/local/hadoop
+
+
+
+要求master配置ssh免密码登录(包括自己)
+ssh-keygen -t rsa -b 2048 -N ''
+for i in 192.168.1.1{0..3}
+do
+ssh-copy-id -i /root/.ssh/id_rsa $i
+done
+
+cat >>/etc/hosts<EOF
+192.168.1.10	master
+192.168.1.11	node1
+192.168.1.12	node2
+192.168.1.13	node3
+
+EOF
+
+for i in node{1..3}
+do
+scp /etc/hosts $i
+done
+
+HDFS 需要配置三个核心文件
+cd /usr/local/hadoop/etc/hadoop
+core-site.xml
+hdfs-site.xml
+slaves
+
+>slaves
+vim slaves
+node1
+node2
+node3
+
+vim hadoop-env.sh
+	export JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.131-11.b12.el7.x86_64/jre
+	export HADOOP_CONF_DIR=/usr/local/hadoop/etc/hadoop
+
+vim core-site.xml
+<configuration>
+     <property>
+	<name>fs.defaultFS</name>
+	<value>hdfs://master:9000</value>
+     </property>
+     <property>
+	<name>hadoop.tmp.dir</name>
+	<value>/var/hadoop</value>
+     </property> 
+</configuration>
+
+for i in 192.168.1.1{0..3}
+do
+ssh $i mkdir /var/hadoop
+done
+
+vim hdfs-site.xml
+<configuration>
+     <property>
+	<name>dfs.namenode.http-address</name>
+	<value>master:50070</value>
+     </property>
+     <property>
+	<name>dfs.namenode.secondary.http-address</name>
+	<value>master:50090</value>
+     </property>
+     <property>
+	<name>dfs.replication</name>	#数据存储份数
+	<value>2</value>
+     </property> 
+</configuration>
+
+
+for i in node{1..3}
+do
+rsync -aSH --delete /usr/local/hadoop ${i}:/usr/local/ -e 'ssh' &
+done
+
+jps				验证hadoop集群信息
+cd /usr/local/hadoop/
+./bin/hdfs namenode -format	格式化hadoop集群，只需要namenode上执行
+./sbin/start-dfs.sh		启动分布式文件系统
+for i in node{1..3}
+do
+echo "#--------$i-------#"
+ssh $i jps
+done
+
+cd /usr/local/hadoop/
+./bin/hdfs dfsadmin -report	查询datanode节点信息
+./sbin/stop-dfs.sh
+rm -rf logs
+./sbin/start-dfs.sh		会在hadoop目录下生成logs文件夹
+
+如果因为配置角色错误导致服务无法正常启动，还原错误配置，运行停止hadoop的脚本，修改错误配置后，清空logs文件夹下日志，在启用hadoop脚本
+
+注意：关闭防火墙，以及Selinux；关闭防火墙，以及Selinux；关闭防火墙，以及Selinux；
+
+==========================================================================================
+Yarn安装与配置
+
+yarn配置文件
+cd /usr/local/hadoop/etc/hadoop
+vim mapred-site.xml			#配置分布式计算框架
+<configuration>
+	<property>
+		<name>mapreduce.framework.name</name>
+		<value>yarn</value>	#取值范围有两种local，yarn即伪分布，完全分布
+	</property>
+</configuration>
+
+
+vim yarn-site.xml
+<configuration>
+	<property>
+		<name>yarn.resourcemanager.hostname</name>	#指定resourcemanager资源管理主机名
+		<value>master</value>
+	</property>
+	<property>
+		<name>yarn.nodemanager.aux-services</name>	#指定计算框架为mapreduce
+		<value>mapreduce_shuffle</value>
+	</property>
+</configuration>
+
+同步mapred-site.xml yarn-site.xml这两个文件至datanode节点
+for i in 192.168.1.1{1..3}
+do
+rsync -aSH --delete /etc/local/hadoop/etc $i:/usr/local/hadoop/ &
+done
+
+cd /usr/local/hadoop
+./sbin/start-yarn.sh		#启动yarn
+
+jps				#验证
+./bin/yarn node -list		#资源管理主机验证
+
+==========================================================================================
+验证：
+http://192.168.1.10:50070/	namenode
+http://192.168.1.10:50090/	SecondaryNameNode
+http://192.168.1.10:8088/	resourcemanager
+http://192.168.1.1{1..3}:50075/	datanode
+http://192.168.1.1{1..3}:8042/	nodemanager
+
+==========================================================================================
+******************************************************************************************
+==========================================================================================
+
+Hadoop使用：
+/usr/local/hadoop/bin/hadoop fs -ls /		#对应shell命令的ls /
+/usr/local/hadoop/bin/hadoop fs -mkdir /abc	#对应shell命令的mkdir abc
+/usr/local/hadoop/bin/hadoop fs -rmdir /abc	#对应shell命令的rm -rf  abc
+/usr/local/hadoop/bin/hadoop fs -touchz /urfile	#对应shell命令的touch /usrfile
+/usr/local/hadoop/bin/hadoop fs -cat /urfile	#对应shell命令的cat /urfile
+/usr/local/hadoop/bin/hadoop fs -rm /urfile	#对应shell命令的rm /urfile
+/usr/local/hadoop/bin/hadoop fs -put		#上传到集群文件系统
+/usr/local/hadoop/bin/hadoop fs -get		#下载到本地文件系统
+
+
+实验，分析词频
+在集群文件系统上创建目录，存放要分析的文件
+/usr/local/hadoop/bin/hadoop fs -mkdir /aabb
+/usr/local/hadoop/bin/hadoop fs -ls /
+上传要分析的文件到刚刚创建的目录
+/usr/local/hadoop/bin/hadoop fs -put *.txt /aabb/
+/usr/local/hadoop/bin/hadoop fs -ls /aabb/
+调用集群分析
+/usr/local/hadoop/bin/hadoop jar share/hadoop/mapreduce/hadoop-mapreduce-examples-2.7.6.jar wordcount /aabb /输出目录
+/usr/local/hadoop/bin/hadoop fs -cat /输出目录/*
+
+==========================================================================================
+******************************************************************************************
+==========================================================================================
+
+		Web1		
+Haproxy主机	Web2		NFS网关hadoop
+		Web3
+
+NFS网关
+1 用户可以通过操作系统兼容的本地NFSv3客户端来阅览HDFS文件系统
+2 用户可以从HDFS文件系统下载文档到本地文件系统
+3 用户可以通过挂载点直接流化数据。支持文件附加，但是不支持随机写
+
+NFS网关支持NFSv3和允许HDFS作为客户端文件系统的一部分被挂载
+
+简而言之，hadoop的HDFS文件夹可以被mount上
+
+不支持随机写
+在非安全模式，运行网关的用户是代理用户
+在安全模式时，Kerberos keytab中的用户是代理用户
+AIX NFS有一些知道的问题，不能让默认的HDFS NFS网关正常工作，如果想在AIX访问NFS网关需要配置以下参数
+	<property>
+		<name>nfs.aix.compatibility.mode.enabled</name>	
+		<value>true</value>
+	</property>
+
+NFS网关
+特性与注意事项
+HDFS超级用户是与NameNode进程本身具有相同标识的用户，超级用户可以执行任何操作，因为权限检查永远不会为超级用户失败
+	<property>
+		<name>nfs.superuser</name>	
+		<value>the_name_of_hdfs_superuser</value>
+	</property>
+
+如果客户端安装允许访问时间更新，在某些Unix系统上，用户可以通过使用"noatime"安装来禁用访问时间更新(禁用访问时间戳)
+	<property>
+		<name>dfs.namenode.accesstime.precision</name>	
+		<value>0</value>
+		<description>The access time for HDFS file is precise upto this value.The default value is 1 hour.Setting a value of 0 disables access times for HDFS.</description>
+	</property>
+
+nfs.dump.dir
+用户需要更新文件转储目录参数。NFS客户端经常重新安排写操作，顺序的写操作会以随机到达NFS网关。这个目录常用于临时存储无序的写操作。对于每个文件，无序的写操作会在他们积累在内存中超过一定的阈值（如 1mb）被转储。需要确保有足够的空间目录。例如，如果应用上传10个100M，那么这个转储目录推荐有1GB左右的空间，以便每个文件都发生最坏的情况。只有NFS网关需要在设置该属性后重启。
+
+nfs.exports.allowed.hosts
+默认情况下，export可以被任何客户端挂载。为了更好的控制访问，可以设置属性。值字符串为了机器名和访问策略，通过空格来分割。机器名的格式可以单一的主机,Java的正则表达式或者IPv4地址。访问权限使用rw或ro来指定导出目录的读/写或机器只读访问。如果访问策略没被提供，默认为只读的。每个条目使用";"来分割。
+
+调试与日志排错
+在配置NFS网关过程中经常会碰到各种各样的错误，如果出现了错误，打开调试日志是一个不错的选择
+
+log4j.property
+-log4j.logger.org.apache.hadoop.hdfs.nfs=DEBUG
+-log4j.logger.org.apache.hadoop.oncrpc=DEBUG
+
+
+NFS网关
+NFS&portmap相关配置
+core-site.xml
+hdfs-site.xml
+
+准备两台机器，禁用selinux，卸载firewalld
+192.168.1.15		-----> nfsgw
+192.168.1.20		-----> client
+				
+				
+client	-----> nfsgw（做为HDFS客户端） ----->hadoop集群
+		nfs server
+		hdfs client
+
+nfsgw 配置 /etc/hosts 
+添加 代理用户（namenode,nfsgw）
+uid gid 完全一致
+
+root@nfsgw ~]# adduser -g 100 gzqstca
+root@nfsgw ~]# id gzqstca
+uid=1000(gzqstca) gid=100(users) groups=100(users)
+root@master ~]# adduser -u 1000 -g 100 gzqstca
+root@master ~]# id gzqstca
+uid=1000(gzqstca) gid=100(users) groups=100(users)
+
+先停止hadoop集群
+/usr/local/hadoop/sbin/stop-all.sh
+
+core-site.xml
+hadoop.proxyuser.gzqstca.groups
+hadoop.proxyuser.gzqstca.hosts
+这里的nfsuser是你机器真实运行nfsgw的用户
+在非安全模式，运行nfs网关的用户为代理用户
+groups为挂载点用户所使用的组
+hosts为挂载点主机地址
+
+namenode上配置core-site.xml 添加以下代码
+	<property>
+		<name>hadoop.proxyuser.gzqstca.groups</name>	
+		<value>*</value>	#让所有的组都允许
+	</property>
+	<property>
+		<name>hadoop.proxyuser.gzqstca.hosts</name>	
+		<value>*</value>	#让所有的主机都允许
+	</property>
+
+同步到其它datanode节点
+for i in 192.168.1.1{1..3}
+do
+rsync -aSH --delete /etc/local/hadoop/etc $i:/usr/local/hadoop/ &
+done
+
+重新启动集群
+/usr/local/hadoop/sbin/start-dfs.sh
+
+
+配置nfs网关
+安装java-1.8.0-openjdk-devel
+拷贝namenode上的/usr/local/hadoop到本机
+删除logs文件夹
+创建logs文件夹,给gzqstca读写权限
+编辑hdfs-site.xml
+nfs.exports.allowed.hosts
+	* rw
+dfs.namenode.accesstime.precision
+ 	3600000
+nfs.dump.dir
+	/var/nfstemp
+nfs.rtmax
+	4194304
+nfs.wtmax
+	1048576
+nfs.port.monitoring.disabled
+	false
+创建/var/nfstemp
+先启动服务，portmap服务（必需使用root用户启动）
+/usr/local/hadoop/sbin/hadoop-daemon.sh --script /usr/local/hadoop/sbin/hdfs start portmap
+在启用nfs3服务（必需使用gzqstca用户启动）
+/usr/local/hadoop/sbin/hadoop-daemon.sh --script /usr/local/hadoop/sbin/hdfs start nfs3
+由于portmap与系统rpcbind冲突，nfs冲突
+yum -y remove rpcbind nfs-utils
+==========================================================================================
+root@nfsgw ~] yum -y install java-1.8.0-openjdk-devel
+root@nfsgw ~] scp -R master:/usr/local/hadoop /usr/local/hadoop
+root@nfsgw ~] rm -rf /usr/local/hadoop/logs/
+root@nfsgw ~] mkdir /usr/local/hadoop/logs/
+root@nfsgw ~] setfacl -m user:gzqstca:rwx /usr/local/hadoop/logs
+root@nfsgw ~] mkdir /var/hadoop
+
+root@nfsgw ~] vim hdfs-site.xml
+	<property>
+		<name>nfs.exports.allowed.hosts</name>	
+		<value>* rw</value>	#对主机进行授权。前面*可以是ip,网段，正则表达式；
+	</property>
+	<property>
+		<name>dfs.namenode.accesstime.precision</name>	
+		<value>3600000</value>	#设置namenode更新时间戳，为3600000毫秒，即1小时
+	</property>
+	<property>
+		<name>nfs.dump.dir</name>	
+		<value>/var/nfstemp</value>	#临时存放文件夹	
+	</property>
+	<property>
+		<name>nfs.rtmax</name>	
+		<value>4194304</value>		#读缓存数据包大小，值为4M，做优化处理
+	</property>
+	<property>
+		<name>nfs.wtmax</name>	
+		<value>1048576</value>		#写缓存数据包大小，值为1M
+	</property>
+	<property>
+		<name>nfs.port.monitoring.disabled</name> #允许所有的挂载点			
+		<value>false</value>	
+	</property>
+
+
+root@nfsgw ~] yum -y remove rpcbind nfs-utils
+root@nfsgw ~] mkdir /var/nfstemp
+root@nfsgw ~] chown gzqstca:users /var/nfstemp
+root@nfsgw ~] /usr/local/hadoop/sbin/hadoop-daemon.sh --script /usr/local/hadoop/sbin/hdfs start portmap
+root@nfsgw ~] su -l gzqstca
+gzqstca@nfsgw ~]$ /usr/local/hadoop/sbin/hadoop-daemon.sh --script /usr/local/hadoop/sbin/hdfs start nfs3
+gzqstca@nfsgw ~]$ exit
+root@nfsgw ~]# jps
+22082 Portmap
+22233 Jps
+22172 Nfs3
+
+验证: 在client机器上
+yum -y install nfs-utils
+mount -t nfs -o vers=3,proto=tcp,nolock,noacl,noatime,sync 192.168.1.15:/ /mnt/
+ls /mnt
+
+vers=3		设置协议版本
+proto=tcp	设置使用tcp协议
+nolock		禁用NLM
+noacl		禁用扩展权限
+noatime		禁用access time 时间戳
+sync		同步客户端
+==========================================================================================
+******************************************************************************************
+==========================================================================================
+
+Hadoop节点管理 
+
+HDFS增加节点
+1 配置所有hadoop环境下的主机,包括主机名，ssh免密码登录，禁用selinux，firewall，iptables，安装java环境
+2 把namenode配置文件复制到配置文件目录下
+3 修改namenode的slaves文件，增加新的节点
+4 同步/usr/local/hadoop至所有节点
+5 在该节点启动Datanode
+	/usr/local/hadoop/sbin/hadoop-daemon.sh start datanode
+6 设置同步带宽，并同步数据
+	/usr/local/hadoop/bin/hdfs dfsadmin -setBalancerBandwidth 67108864
+	/usr/local/hadoop/sbin/start-balancer.sh -threshold5
+7 查看集群状态
+	/usr/local/hadoop/bin/hdfs dfsadmin -report
+
+增加节点：
+配置/etc/hosts增加新节点名称
+新节点安装openjdk
+拷贝/usr/local/hadoop到新节点
+在slaves里增加新节点名称
+设置ssh免密码登录
+启动服务
+
+[root@master ~]# ssh-copy-id -i /root/id_rsa.pub 192.168.1.20
+[root@master ~]# echo "newnode" >>/usr/local/hadoop/etc/slaves
+[root@master ~]# ssh 192.168.1.20
+		hostnamectl set-hostname newnode
+[root@newnode ~]# scp 192.168.1.10:/etc/hosts /etc/hosts
+[root@newnode ~]# echo "192.168.1.20 newnode">>/etc/hosts
+[root@newnode ~]# for i in 192.168.1.1{0..3}
+do
+scp /etc/hosts $i:/etc/hosts
+done
+[root@newnode ~]# yum -y install java-1.8.0-openjdk-devel
+[root@newnode ~]# rsync -aSH master:/usr/local/hadoop /usr/local/
+[root@newnode ~]# /usr/local/hadoop/sbin/hadoop-daemon.sh start datanode
+		exit
+[root@master ~]# /usr/local/hadoop/bin/hdfs dfsadmin -report 
+
+[root@master ~]# /usr/local/hadoop/bin/hdfs dfsadmin -setBalancerBandwidth 67108864
+[root@master ~]# /usr/local/hadoop/sbin/start-balancer.sh -threshold5
+=======================================================================================
+***************************************************************************************
+
+
+删除节点：
+配置 hdfs-site.xml 增加
+dfs.hosts.exclude(排除)
+/usr/local/hadoop/bin/hdfs dfsadmin -refreshNodes
+/usr/local/hadoop/sbin/hadoop-daemon.sh stop datanode
+删除slaves节点信息
+
+
+
+[root@master ~]# vim /usr/local/hadoop/etc/hadoop/hdfs-site.xml	
+	<property>				#增加以下代码
+		<name>dfs.hosts.exclude</name> 			
+		<value>/usr/local/hadoop/exclude</value>	
+	</property>
+[root@master ~]# touch /usr/local/hadoop/exclude
+[root@master ~]# echo "newnode">/usr/local/hadoop/exclude
+[root@master ~]# /usr/local/hadoop/bin/hdfs dfsadmin -report
+查看newnode的状态
+[root@master ~]# /usr/local/hadoop/bin/hdfs dfsadmin -refreshNodes	#执行刷新
+REfresh nodes successful
+[root@master ~]# /usr/local/hadoop/bin/hdfs dfsadmin -report
+再次查看newnode的状态
+Decommission Status : Decommission in progress	#显示该目前该主机数据以经开始向外迁移，不能动它，不能动它，不能动它。只能等，只能等，只能等
+[root@master ~]# /usr/local/hadoop/bin/hdfs dfsadmin -report
+再次查看newnode的状态
+Decommission Status : Decommission		#如果显示该状态，就是成功转移数据
+
+[root@newnode ~]# /usr/local/hadoop/sbin/hadoop-daemon.sh stop datanode
+[root@master ~]# vim /usr/local/hadoop/etc/slave	#删除newnode信息
+
+==========================================================================================
+******************************************************************************************
+==========================================================================================
+
+Yarn的相关操作
+由于在2.X hadoop引入了yarn框架，对于计算节点的操作已经变的非常简单
+增加节点
+/usr/local/hadoop/sbin/yarn-daemon.sh start nodemanager
+删除节点
+/usr/local/hadoop/sbin/yarn-daemon.sh stop nodemanager
+查看节点
+/usr/local/hadoop/bin/yarn node -list
+
+yarn增加，删除节点配置
+增加节点
+配置/etc/hosts增加新节点名称
+新节点 安装openjdk
+拷贝/usr/local/hadoop到新节点
+设置ssh免密码登录
+
+增加节点
+启动服务
+[root@newnode ~]# /usr/local/hadoop/sbin/yarn-daemon.sh start datanode
+查看 
+[root@master ~]# /usr/local/hadoop/bin/yarn node list
+
+删除节点
+停止服务
+[root@newnode ~]# /usr/local/hadoop/sbin/yarn-daemon.sh stop datanode
+查看 
+[root@master ~]# /usr/local/hadoop/bin/yarn node list
+
+==========================================================================================
+******************************************************************************************==========================================================================================
+
+HDFS还有很多其它的应用方式，比如native-hdfs
+用到的软件依赖
+cmake,fuse-devel
+protobuf
+protobuf-c
+native-hdfs-fuse
