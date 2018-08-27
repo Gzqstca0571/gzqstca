@@ -1,0 +1,245 @@
+安装kvm虚拟机工具：
+yum -y install 
+qemu-kvm #为kvm提供底层支持
+libvirt-client #virsh等软件
+libvirt-daemon #libvirtd服务守护进程
+libvirt-daemon-drive-qemu #virsh的qemu驱动
+virt-install #系统安装工具
+virt-manager #图形管理工具
+virt-v2v #虚拟机迁移工具
+virt-p2v #物理机迁移工具
+
+在真机上添加一条路由转发，以方便后期的虚拟机访问外网
+vim /etc/sysctl.d/70-system.conf
+net.ipv4.ip_forward = 1
+
+配置虚拟网卡参数
+cd /etc/libvirt/qemu/networks/autostart/
+cp default.xml /etc/libvirt/qemu/networks/veth1.xml
+cp default.xml /etc/libvirt/qemu/networks/veth2.xml
+cd /etc/libvirt/qemu/networks/
+vim veth1.xml 
+例：
+<network>
+<name>veth1</name>
+<forward mode='nat'/>
+<bridge name='veth1'/>
+<ip address='192.168.1.254' netmask='255.255.255.0'>
+<dhcp>
+<range start='192.168.1.100' end='192.168.1.200'/>
+</dhcp>
+</ip>
+</network>
+
+vim veth2.xml 
+<network>
+<name>veth2</name>
+<forward mode='nat'/>
+<bridge name='veth2'/>
+<ip address='192.168.2.254' netmask='255.255.255.0'>
+</ip>
+</network>
+
+删除真机防火墙，关闭selinux
+yum -y remove firewall
+setenforce 0
+编辑selinux开机不启用
+vim /etc/selinux/config
+
+编辑虚拟网卡设置
+cd /etc/sysconfig/network-scripts/
+vim ifcfg-veth1
+cp ifcfg-veth1 ifcfg-veth2
+vim ifcfg-veth2
+
+vim /etc/sysconfig/network-scripts/ifcfg-veth1
+例：
+TYPE=Ethernet
+PROXY_METHOD=none
+BROWSER_ONLY=no
+BOOTPROTO=none
+DEFROUTE=yes
+NAME=veth1
+DEVICE=veth1
+ONBOOT=yes
+IPADDR=192.168.1.254
+PREFIX=24
+GATEWAY=192.168.1.254
+DNS1=114.114.114.114
+
+vim /etc/sysconfig/network-scripts/ifcfg-veth2
+例：
+TYPE=Ethernet
+PROXY_METHOD=none
+BROWSER_ONLY=no
+BOOTPROTO=none
+DEFROUTE=yes
+NAME=veth2
+DEVICE=veth2
+ONBOOT=no
+IPADDR=192.168.2.254
+PREFIX=24
+GATEWAY=192.168.2.254
+DNS1=114.114.114.114
+
+定义虚拟网卡，并启用
+在确定以关闭防火墙及selinux情况下，如有相关报错，先重启真机
+cd /etc/libvirt/qemu/networks/
+virsh net-define veth1.xml 
+virsh net-define veth2.xml
+virsh net-start veth1
+virsh net-start veth2
+virsh net-autostart veth1
+virsh net-autostart veth2
+
+创建一个20G（大小看环境）模板镜像文件
+cd /var/lib/libvirt/images/
+qemu-img create -f qcow2 node.qcow2 20G
+
+virt-manager
+创建新虚拟机
+装centos7 的系统
+可以选择网络安装
+分配空间，选择自定义，使用之前创建的node.qcow2
+分区只分一个根， 标准分区
+语言用默认英文
+关闭kdump
+
+进入虚拟机查看IP地址，veth1之前定义是dhcp分配的ip地址
+拷贝真机yum源至虚拟机
+
+在虚拟机上安装所需的工具
+yum -y install net-tools vim-enhanced iproute bash-completion
+
+vi /etc/sysconfig/network
+NOZEROCONF="yes"
+
+vi /etc/sysconfig/network-scripts/ifcfg-eth0
+NAME="eth0"
+ONBOOT=yes
+NETBOOT=yes
+IPV6INIT=yes
+BOOTPROTO=dhcp
+TYPE=Ethernet
+DEVICE="eth0"
+
+vi /etc/sysconfig/grub
+添加一行，以方便真机console字符连接
+GRUB_CMDLINE_LINUX="console=tty0 console=ttyS0,115200n8"
+
+应用该配置文件：
+grub2-mkconfig -o /boot/grub2/grub.cfg
+
+配置模板镜像完毕后关机：
+halt -p
+
+cd /etc/libvirt/qemu
+cp centos7.0.xml /root/
+vim /root/centos7.0.xml
+9 <name>centos7.0</name>
+改成 <name>node0</name>方便执行脚本
+以下标注内容均需删除：
+以下标注内容均需删除：
+以下标注内容均需删除：
+
+10 <uuid>c04d4f3a-a3b9-4ddb-93ea-2361636d6e6f</uuid>
+65 <mac address='52:54:00:22:f4:de'/>
+
+所有<address type=....../>
+所有<controller type='usb'.......</controller>
+
+因为之前还有一块veth2虚拟网卡，故添加以下语句：
+<interface type='network'>
+<source network='veth2'/>
+<model type='virtio'/>
+</interface>
+
+删除之前安装定义的模板
+virsh undefine centos7.0
+ln -s /root/kvm.sh /sbin/kvm.sh
+ln -s /root/setip.sh /sbin/setip.sh
+
+附：虚拟机创建脚本
+vim kvm.sh
+#!/bin/bash
+read -p "请输入需要创建的虚拟机数量：" num
+read -p "请输入起始的虚拟机编号：node" x
+
+for i in seq $num
+do
+cp /root/centos7.0.xml /var/lib/libvirt/qemu/node$[i-1+x].xml
+sed -i 's/name>node.</name>node'$[i-1+x]'</' /var/lib/libvirt/qemu/node$[i-1+x].xml
+sed -i 's/node..qcow2/node'$[i-1+x]'.img/' /var/lib/libvirt/qemu/node$[i-1+x].xml
+virsh define /var/lib/libvirt/qemu/node$[i-1+x].xml
+qemu-img create -b /var/lib/libvirt/images/node.qcow2 -f qcow2 /var/lib/libvirt/images/node$[i-1+x].img 20G
+done
+
+附：字符界面定义虚拟机ip脚本
+vim setip.sh
+#!/bin/bash
+yum -y install expect tcl
+read -p "请输入虚拟机起始编号(1~): node" vm
+read -p "请输入需要创建起始ip地址(例:192.168.2.5)：" cip
+read -p "请输入需要创建连续的主机数(1~)：" num
+ip=echo $cip|awk -F. '{print $4}'
+net=echo $cip|awk -F. '{print $1"."$2"."$3}'
+case $net in
+192.168.1)
+cnet=eth0;;
+192.168.2)
+cnet=eth1;;
+*)
+echo "错误的IP地址！"
+exit
+esac
+#for i in seq $num
+#do
+#expect <<eof
+#spawn virsh start node$[vm+i-1]
+#expect "#" {send "\n"}
+#exit
+#eof
+#done
+
+#sleep 18
+
+for i in seq $num
+do
+echo $net.$[i+ip-1]>>/tmp/host
+expect <<EOF
+spawn virsh console node$[vm+i-1]
+expect "换码符为 ^]" {send "\n"}
+expect "login:" {send "root\n"}
+expect "Password:" {send "123456\n"}
+expect "]#" {send "nmcli connection add con-name $cnet ifname $cnet type ethernet\n"}
+expect "]#" {send "nmcli connection modify $cnet ipv4.method manual ipv4.addresses $net.$[i+ip-1]/24 ipv4.gatew
+ay $net.254 ipv4.dns 114.114.114.114 connection.autoconnect yes\n"}expect "]#" {send "nmcli connection up $cnet\n"}
+expect "]#" {send "hostnamectl set-hostname node$[i+ip-1].cn\n"}
+interact
+exit
+EOF
+done
+#yum -y install pssh
+
+for i in seq $num
+do
+expect <<EOF
+spawn ssh-copy-id -o StrictHostKeyChecking=no $net.$[ip+i-1]
+expect "password:" {send "123456\n"}
+expect "#" {send "\n"}
+exit
+EOF
+done
+
+echo 'nmcli connection show| awk '"'/--/{print "'$'"2}'"'>/tmp/et.txt'>/tmp/et.sh
+echo for i in 'cat /tmp/et.txt'>>/tmp/et.sh
+echo do >> /tmp/et.sh
+echo nmcli connection delete "$"i >>/tmp/et.sh
+echo done >> /tmp/et.sh
+chmod +x /tmp/et.sh
+pscp.pssh -h /tmp/host /new/gao.repo /etc/yum.repos.d/gao.repo
+pscp.pssh -h /tmp/host /tmp/et.sh /tmp/et.sh
+pssh -h /tmp/host bash /tmp/et.sh
+rm -rf /tmp/host
+
+
