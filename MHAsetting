@@ -1,0 +1,307 @@
+所有主库机器需要能够访问从库
+manager主机要求能够访问所有的mysql节点
+配置所有数据节点主机之间可以互相以ssh无密钥访问认证
+配置manager主机。无密钥ssh访问所有节点主机
+配置主从同步，要求如下
+主库    开半同步复制
+备主    开半同步复制
+从库    不做主库不用开半同步复制
+从库    不做主库不用开半同步复制
+
+所有主机上安装Perl依赖包
+yum -y install perl-*.rpm
+
+在所有主机上添加授权监控用户
+grant all on *.* to root@"%" identified by "123456";
+
+在所有数据库服务器上安装mha-node包
+yum -y install perl-DBD-mysql perl-DBI
+rpm -ivh mha4mysql-node-0.56-0.el6.noarch.rpm
+
+在管理主机上安装mha_node和mha-manager包
+yum -y install perl-DBD-mysql perl-DBI
+rpm -ivh mha4mysql-node-0.56-0.el6.noarch.rpm
+yum -y install perl-ExtUtils-* perl-CPAN-*
+tar -xf mha4mysql-manager-0.56.tar.gz
+cd mha4mysql-manager-0.56
+perl Makefile.PL
+make&&make install
+
+
+配置主
+yum -y install mariadb mariadb-server
+systemctl restart mariadb mariadb-server
+mysql -e "set password=password('123456')"
+#mysql -e "set global relay_log_purge=off"	#把自动删除本机的中继日志文件设置为关闭
+
+vim /etc/my.cnf
+server_id = 1
+relay_log = relay-log   中继日志名称
+binlog_format = "mixed" binlog日志格式
+log_bin = mysql-bin     开启binlog日志
+plugin-load = "rpl_semi_sync_master=semisync_master.so;rpl_semi_sync_slave=semisync_slave.so"
+rpl-semi-sync-master-enabled = 1	#开启半同步复制
+rpl-semi-sync-slave-enabled = 1
+
+mysql -uroot -p123456
+grant replication slave on *.* to root@"%" identified by '123456';
+grant all on *.* to repluser@"%" identified by '123456';
+
+show master status\G
+MariaDB [(none)]> show master status\G
+*************************** 1. row ***************************
+            File: mysql-bin.000001
+        Position: 145
+    Binlog_Do_DB:
+Binlog_Ignore_DB:
+1 row in set (0.01 sec)
+
+set global relay_log_purge=off; 不自动删除中继日志；
+
+配置丛
+yum -y install mariadb mariadb-server
+systemctl restart mariadb mariadb-server
+vim /etc/my.cnf
+server_id = *
+
+MariaDB [(none)]> change master to master_host='192.168.2.10',master_user='root',master_password='1
+23456',master_log_file='mysql-bin.000001',master_log_pos=145;
+start slave;
+
+show slave status\G
+
+—————————————————————————————————————————————————>
+—————————
+在搭建一台mariadb服务器，跟主数据库服务器做高可用
+yum -y install mariadb mariadb-server
+yum -y install mysql-community-server percona-xtrabackup-24
+vim /etc/my.cnf
+[mysqld]
+server_id = 4
+datadir=/var/lib/mysql
+binlog_format = "mixed"
+log_bin = mysql-bin
+socket=/var/lib/mysql/mysql.sock
+plugin-load = "rpl_semi_sync_master=semisync_master.so;rpl_semi_sync_slave=semisync_slave.so"
+rpl-semi-sync-master-enabled = 1
+rpl-semi-sync-slave-enabled = 1
+
+
+
+mysql
+set password=password('123456')
+change master to master_host='192.168.2.10',master_user='root',master_password='123456',master_log_
+file='mysql-bin.000002',master_log_pos=245; 
+
+
+start slave;
+
+
+
+MariaDB [(none)]> install plugin rpl_semi_sync_slave soname 'semisync_slave.so';
+MariaDB [(none)]> set global rpl_semi_sync_slave_enabled=1;
+MariaDB [(none)]> show global variables like '%rpl_semi%';
++---------------------------------+-------+
+| Variable_name                   | Value |
++---------------------------------+-------+
+| rpl_semi_sync_slave_enabled     | ON    |
+| rpl_semi_sync_slave_trace_level | 32    |
++---------------------------------+-------+
+2 rows in set (0.00 sec)
+
+set global relay_log_purge=off;
+
+_____________________________________________________________________________
+_______________________________________________________________________________
+[root@gzqstca mysql]# pwd
+/var/ftp/pub/mysql
+[root@gzqstca mysql]# for i in 192.168.2.1{0..4}; do ssh $i mkdir /perl; scp perl-*.rpm $i:/perl; d
+one[root@node10..4 ~]# yum -y install /perl/perl-*.rpm
+
+all
+MariaDB [(none)]> grant all on *.* to root@"%" identified by '123456';
+
+all
+[root@gzqstca mysql]# for i in 192.168.2.1{0..4}; do ssh $i yum -y install perl-DBD-mysql perl-DBI;
+ done[root@gzqstca mysql]# for i in 192.168.2.1{0..4}; do scp mha4mysql-node-0.56-0.el6.noarch.rpm $i:/root;ssh $i yum -y install /root/mha4mysql-node-0.56-0.el6.noarch.rpm; done
+_________________________________________________________________________
+_________________________________________________________________________
+
+mha_manager
+yum install -y gcc pcre-devel pkgconfig autoconf automake perl-ExtUtils-MakeMaker perl-CPAN perl-DB
+I perl-DBD-MySQLyum install -y perl-Config-Tiny perl-Log-Dispatch perl-Parallel-ForkManager perl-Time-HiRes
+yum -y install perl-DBD-mysql perl-DBI
+yum -y install mha4mysql-node-0.56-0.el6.noarch.rpm
+yum -y install perl-ExtUtils-* perl-CPAN-*
+tar -zxf mha4mysql-manager-0.56.tar.gz
+cd mha4mysql-manager-0.53
+perl Makefile.PL
+make
+一路回车
+make install
+
+[root@mha_manager bin]# cd /root/mha4mysql-manager-0.56/bin
+[root@mha_manager bin]# mkdir /root/bin
+[root@mha_manager bin]# cp masterha_* /root/bin/
+
+cp master_ip_failover  /usr/local/bin/
+chmod 755 /usr/local/bin/master_ip_failover
+
+
+
+mkdir /etc/mha
+[root@mha_manager conf]# cp /root/mha4mysql-manager-0.56/samples/conf/app1.cnf /etc/mha/mha.cnf
+vim /etc/mha/mha.cnf
+[server default]
+manager_log=/var/log/mha.log
+manager_workdir=/etc/mha
+master_ip_failover_script=/usr/local/bin/master_ip_failover
+ssh_user=root
+ssh_port=22
+repl_user=repluser
+repl_password=123456
+user=root
+password=123456
+
+[master0]
+candidate_master=1
+hostname=192.168.2.10
+port=3306
+
+[master1]
+candidate_master=1
+hostname=192.168.2.14
+port=3306
+
+[node12]
+hostname=192.168.2.12
+no_master=1
+port=3306
+
+[node13]
+hostname=192.168.2.13
+no_master=1
+port=3306
+
+[root@mha_manager bin]# masterha_check_ssh --conf=/etc/mha/mha.cnf
+[root@mha_manager bin]# masterha_check_repl --conf=/etc/mha/mha.cnf
+
+[root@mha_manager bin]# vim master_ip_failover
+ 35 my $vip = '192.168.2.111/24';  # Virtual IP
+ 36 my $key = "1";
+ 37 my $ssh_start_vip = "/sbin/ifconfig eth1:$key $vip";
+ 38 my $ssh_stop_vip = "/sbin/ifconfig eth1:$key down";
+
+手动布置vip地址到主库服务器上
+[root@master0 perl]# ifconfig eth1:1 192.168.2.111/24
+
+[root@mha_manager bin]# chmod +x /usr/local/bin/master_ip_failover
+[root@mha_manager bin]# masterha_manager --conf=/etc/mha/mha.cnf --remove_dead_master_conf --ignore
+_last_failover&                启用监控程序
+可选项：
+--remove_dead_master_conf       加该项会删除配置文件中master段
+--ignore_last_failover          忽略8小时主库荡机,8小时内不对其检测
+
+注意：
+测试将主库服务器故意荡机后重启服务器，主库以经由manager自动转移至备份主库上
+注意binlog日志，注意binlog日志，注意binlog日志
+select @@hostname查询目前主机
+
+nmap -sS -p 3306 192.168.2.10
+
+__________________________________________________________________________
+__________________________________________________________________________
+安装mycat中间件
+用做读写分离
+yum -y install java-1.8.0-openjdk
+tar -xf Mycat-server-1.6-RELEASE-20161028204710-linux.tar.gz
+mv mycat /usr/local/
+cd /usr/local/mycat/conf
+修改mycat配置文件
+server.xml              设置连接mycat服务器的帐号，密码等
+cp server.xml{,.bak}
+vim server.xml
+ <user name="mycat">
+                <property name="password">mycat</property>
+                <property name="schemas">TESTDB</property>
+</user> (设置可读写的帐号密码)
+<user name="user">
+                <property name="password">user</property>
+                <property name="schemas">TESTDB</property>
+                <property name="readOnly">true</property>
+</user> (设置只读的帐号密码)
+＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝>
+＝＝＝＝＝＝＝＝＝＝schema.xml              设置mycat使用的真实数据库和表
+<schema>......</schema>
+<dataNode 选项 ... />
+<dataHost ...>......</dataHost>
+vim schema.xml
+5　<schema name="TESTDB" checkSQLschema="false" sqlMaxLimit="100">      和server.xml文件定义的虚拟>库必需一致
+7　<table name="新建表格new１" dataNode="dn1,dn2,dn3" rule="auto-sharding-long" />
+or <table name="goods" primaryKey="ID" type="global" dataNode="dn1,dn2,dn3" />  (没规则的前提下所有节点都有该表格，查询global建表规则)
+
+　创建一张表格，该表名为真实表名，定义数据库节点，定义所使用分布式规则
+ 36         <dataNode name="dn1" dataHost="c1" database="db1" />
+ 37         <dataNode name="dn2" dataHost="c2" database="db2" />
+ 38         <dataNode name="dn3" dataHost="c3" database="db3" />
+对第一个节点dn１定义数据主机c１：
+         <dataHost name="c1" maxCon="1000" minCon="10" balance="0"
+                 writeType="0" dbType="mysql" dbDriver="native" switchType="1"  slaveThres    hold="100">
+               <heartbeat>select user()</heartbeat>
+                 <writeHost host="hostM1" url="192.168.2.12:3306" user="root" password="123456">
+                        <readHost host="hostS1" url="192.168.2.12:3306" user="root" password="123456" />
+                 </writeHost>
+         </dataHost>
+对第一个节点dn２定义数据主机c２：
+         <dataHost name="c2" maxCon="1000" minCon="10" balance="0"
+                 writeType="0" dbType="mysql" dbDriver="native" switchType="1"  slaveThres    hold="100">
+                <heartbeat>select user()</heartbeat>
+                 <writeHost host="hostM2" url="192.168.2.13:3306" user="root" password="123456">
+                        <readHost host="hostS2" url="192.168.2.13:3306" user="root" password="123456" />
+                 </writeHost>
+         </dataHost>
+对第一个节点dn３定义数据主机c３：
+         <dataHost name="c3" maxCon="1000" minCon="10" balance="0"
+                 writeType="0" dbType="mysql" dbDriver="native" switchType="1"  slaveThres    hold="100">
+                <heartbeat>select user()</heartbeat>
+                 <writeHost host="hostM3" url="192.168.2.14:3306" user="root" password="123456">
+                        <readHost host="hostS3" url="192.168.2.14:3306" user="root" password="123456" />
+                 </writeHost>
+         </dataHost>
+=============================================================================
+vim /etc/my.cnf
+lower_case_table_names = 1      数据表名不区别字母大小写
+
+grant all on *.* to root@"%" identified by '123456';    所有节点上面操作
+192.168.2.12
+
+create database db1;
+192.168.2.13
+create database db2;
+192.168.2.14
+create database db3;
+
+[root@mycat conf]# vim wrapper.conf
+[root@mycat conf]# /usr/local/mycat/bin/mycat --help
+Usage: /usr/local/mycat/bin/mycat { console | start | stop | restart | status | dump }
+[root@mycat conf]# /usr/local/mycat/bin/mycat start
+
+clent客户端
+mysql -h192.168.2.16 -umycat -pmycat            使用在server.xml定义的帐号登陆数据库，可读写
+mysql -h192.168.2.16 -uuser -puser
+
+
+
+
+
+
+
+
+
+
+
+＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝>
+＝＝＝＝＝＝＝＝＝cp schema.xml{,.bak}
+rule.xml                设置mycat分片规则
+cp rule.xml{,.bak}
+                       
