@@ -1,0 +1,21 @@
+yum install ppp
+wget http://poptop.sourceforge.net/yum/stable/rhel6/x86_64/pptpd-1.4.0-1.el6.x86_64.rpm -O /root/pptpd.rpm
+yum -y install /root/pptpd.rpm
+sed -i "66c ms-dns 8.8.8.8" /etc/ppp/options.pptpd
+sed -i "67c ms-dns 8.8.4.4" /etc/ppp/options.pptpd
+sed -i "2a test    pptpd   123456  *" /etc/ppp/chap-secrets
+sed -i "3a gzqstca pptpd   87646637        *" /etc/ppp/chap-secrets
+sed -i "102c localip 192.168.100.1" /etc/pptpd.conf
+sed -i "103c remoteip 192.168.100.150-200" /etc/pptpd.conf
+sed -i "s/net.ipv4.ip_forward = 0/net.ipv4.ip_forward = 1/" /etc/sysctl.conf
+sysctl -p
+service pptpd reload
+chkconfig pptpd on
+iptables -t nat -A POSTROUTING -s 192.168.100.0/24 -o eth0 -j MASQUERADE
+iptables -A INPUT -p tcp -m tcp --dport 1723 -j ACCEPT
+iptables -A FORWARD -s 192.168.100.0/24 -o eth0 -j ACCEPT 
+iptables -A FORWARD -d 192.168.100.0/24 -i eth0 -j ACCEPT
+service iptables save
+chkconfig iptables on
+
+iptables -t nat -A POSTROUTING -s 192.168.100.0/24 -o eth0 -j MASQUERADE COMMIT
