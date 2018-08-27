@@ -1,0 +1,122 @@
+Linux包过滤防火墙
+
+[root@proxy ~]# systemctl stop firewalld
+[root@proxy ~]# systemctl disable firewalld
+
+[root@proxy ~]# systemctl disable libvirtd	虚拟机上关闭虚拟机网卡
+[root@proxy ~]# reboot				重启
+
+[root@proxy ~]# which iptables
+/usr/sbin/iptables
+
+[root@proxy ~]# yum -y install iptables-services	软件功能，可以把规则保存到文件中，方便之后开机加载
+[root@proxy ~]# systemctl restart iptables.service
+
+过滤表
+
+包过滤匹配流程
+顺序比对，匹配即停止
+若无任何匹配，则按默认策略处理
+
+[root@proxy ~]# iptables -t filter -I INPUT -p icmp -j REJECT	建立一张名称为filter的过滤表格，插入当有进入防火墙的以协议icmp时数据包，目标给予操作为拒绝
+[root@proxy ~]# iptables -F			清除过滤标中所有规则
+[root@proxy ~]# iptables -t filter -L INPUT
+[root@proxy ~]# iptables -L-	
+Chain INPUT (policy ACCEPT)
+target     prot opt source               destination         
+
+Chain FORWARD (policy ACCEPT)
+target     prot opt source               destination         
+
+Chain OUTPUT (policy ACCEPT)
+target     prot opt source               destination
+
+[root@proxy ~]# iptables -I INPUT -p icmp -j REJECT
+[root@proxy ~]# iptables -L
+Chain INPUT (policy ACCEPT)
+target     prot opt source               destination         
+REJECT     icmp --  anywhere             anywhere             reject-with icmp-port-unreachable
+基本的目标操作
+ACCEPT
+DROP
+REJECT
+LOG
+
+[root@proxy ~]# iptables -A INPUT -p tcp -j ACCEPT
+[root@proxy ~]# iptables -I INPUT -p icmp -j REJECT
+[root@proxy ~]# iptables -A INPUT -p udp -j ACCEPT
+[root@proxy ~]# iptables -L
+Chain INPUT (policy ACCEPT)
+target     prot opt source               destination         
+REJECT     icmp --  anywhere             anywhere             reject-with icmp-port-unreachable
+ACCEPT     tcp  --  anywhere             anywhere            
+ACCEPT     udp  --  anywhere             anywhere            
+
+Chain FORWARD (policy ACCEPT)
+target     prot opt source               destination         
+
+Chain OUTPUT (policy ACCEPT)
+target     prot opt source               destination 
+
+
+[root@proxy ~]# iptables -I INPUT 2 -p icmp -j REJECT 
+[root@proxy ~]# iptables -nL INPUT --line-numbers
+Chain INPUT (policy ACCEPT)
+num  target     prot opt source               destination         
+1    REJECT     icmp --  0.0.0.0/0            0.0.0.0/0            reject-with icmp-port-unreachable
+2    REJECT     icmp --  0.0.0.0/0            0.0.0.0/0            reject-with icmp-port-unreachable
+3    ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0           
+4    ACCEPT     udp  --  0.0.0.0/0            0.0.0.0/0   
+
+[root@proxy ~]# iptables -D INPUT 1		删除INPUT链中的第1条规则
+[root@proxy ~]# iptables -t nat -L		查看nat表中的规则
+
+
+[root@proxy ~]# iptables -I INPUT -p tcp --dport 80 -j REJECT
+[root@proxy ~]# iptables -I INPUT -s 192.168.2.100 -j REJECT
+[root@proxy ~]# iptables -I INPUT -d 192.168.2.5 -p tcp --dport 80 -j REJECT
+[root@proxy ~]# iptables -I INPUT -i eth0 -p tcp --dport 80 -j REJECT
+[root@proxy ~]# iptables  -A  INPUT  -s 192.168.4.120  -j  DROP
+
+
+
+
+
+
+开启IP转发
+[root@proxy ~]# iptables -P INPUT DROP		修改INPUT链默认规则为DROP 
+[root@proxy ~]# echo 1 >/proc/sys/net/ipv4/ip_forward		当前生效
+[root@proxy ~]# echo 'net.ipv4.ip_forward=1'>>/etc/sysctl.conf	永久生效
+[root@proxy ~]# sysctl -p	启用转发服务
+net.ipv4.ip_forward = 1
+
+
+
+iptables -t 	filter	-A	INPUT	-s			-j 动作
+		nat	-I	OUTPUT	-d
+		mangle		FORWARD	-p	tcp	--dport
+						udp	--sport
+						icmp
+		raw			-i(接收数据的网卡)	eth0
+					-o（发送数据的网卡）
+`
+[root@proxy ~]# iptables -I FORWARD -s 192.168.4.100 -p tcp --dport 80 -j DROP
+
+[root@proxy ~]# iptables -I INPUT -p icmp --icmp-type echo-request -j DROP
+
+[root@proxy ~]# iptables -A INPUT -p tcp --dport 22 -m mac --mac-source 52:54:00:b2:7c:d1 -j DROP
+
+[root@proxy ~]# iptables -A INPUT -p tcp -m multiport --dport 20:22,25,80,110,16000:18000 -j ACCEPT
+[root@proxy ~]# iptables -A INPUT -j DROP
+
+[root@proxy ~]# iptables -A INPUT -m iprange --src-rang 192.168.4.100-192.168.4.200 -p tcp --dport 22 -j ACCEPT
+[root@proxy ~]# iptables -t nat -A POSTROUTING -s 192.168.4.0/24 -p tcp --dport 80 -j SNAT  --to-source 192.168.2.5
+
+
+iptables -t nat -A POSTROUTING -s 192.168.4.0/24 -j MASQUERADE
+iptables -t nat -A POSTROUTING -s 192.168.4.0/24 -j SNAT --to 192.168.2.5
+
+filter	系统默认
+INPUT	数据包的目的地址是防火墙的IP地址
+OUTPUT	数据包的源地址是防火墙的IP地址
+FORWARD	数据包的源地址及目的地址均不属于防火墙
