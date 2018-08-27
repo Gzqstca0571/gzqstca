@@ -1,0 +1,363 @@
+负载均衡器：nginx/haproxy/lvs/F5
+======================================================================================
+衡量负载均衡器性能的指标
+Session rate 会话率，每秒产生的会话数
+Session concurrency 并发会话数，服务器处理会话时间越长，并发会话数越多
+Data rate 数据速率，以MB/s或Mbps衡量；大的对象导致并发会话数增加；高会话数，高数据速率要求更多的内存
+
+
+
+
+LVS:Linux虚拟服务器
+一，工作模式
+1 NAT
+2 TUN :隧道模式
+3 DR
+4 FULL nat:大规模部署
+
+二，LVS的调度算法
+1 轮询 				rr
+2 加权轮询 			wrr
+3 最少连接 			lc
+4 加权最少连接 			wlc
+5 基于局部最少连接 		lblc
+6 带复制基于局部最少连接 	lblcr
+7 源地址散列			sh
+8 目标地址散列			dh
+9 期望最少延迟			sed
+10最少队列调度			nq
+
+LVS-NAT模式：调度器有两块网卡
+新建虚拟机 
+
+4 配置LVS
+1）安装
+yum -y install -y ipvsadm
+2) 创建虚拟服务器，调度算法为rr
+ipvsadm -A -t 192.168.31.111:80 -s rr
+3) 将Real server添加到虚拟服务器中
+ipvsadm -a -t 192.168.31.111:80 -r 192.168.1.2 -m -w2
+ipvsadm -a -t 192.168.31.111:80 -r 192.168.1.3 -m
+4) 查看规则
+ipvsadm -Ln
+5) 验证。给两台服务器配置不同的页面
+6) 修改调度算法为wrr
+ipvsadm -E -t 192.168.31.111:80 -s wrr
+7) 删除
+ipvsadm -d -t 192.168.31.111:80 -r 192.168.1.3
+ipvsadm -D -t 192.168.31.111:80
+======================================================================================
+LVS-DR模式：
+一 拓扑：LVS调度器只有一个VIP地址，它和real server在同一个网络
+二 客户机要把数据发给VIP。VIP需要出现在每台服务器上（调度器，web服务器）
+三 为了地址不冲突，需要把VIP配置在调度器的eth0上，把VIP配置在web服务器lo回环口上
+四 每台主机有自己的IP地址，客户发来请求，只有LVS进行响应。为了实现这点，需要更改WEB服务器的内核参数
+五 实施
+1 调度器设置
+ifdown eth2			关闭网卡
+ipvsadm -D -t 201.1.1.4:80 	清理规则
+cp /etc/sysconfig/network-scripts/ifcfg-eth0{,:0}
+vim /etc/sysconfig/network-scripts/ifcfg-eth0:0
+TYPE=Ethernet
+BOOTPROTO=none
+NAME=eth0:0
+ONBOOT=yes
+IPADDR=192.168.1.222
+PREFIX=24
+
+ifup eth0:0
+
+3 在WEB服务器lo:0上配置VIP
+cp /etc/sysconfig/network-scripts/ifcfg-lo{,:0}
+vim /etc/sysconfig/network-scripts/ifcfg-lo:0
+DEVICE=lo:0
+IPADDR=192.168.1.222
+NETMASK=255.255.255.255
+NETWORK=192.168.1.222
+BROADCAST=192.168.1.222
+ONBOOT=yes
+NAME=lo:0
+
+ifup lo:0
+ifconfig
+
+4 在WEB服务器上修改内核参数
+sysctl -a |grep arp_ig
+echo "net.ipv4.conf.all.arp_ignore = 1">>/etc/sysctl.conf
+echo "net.ipv4.conf.lo.arp_ignore = 1">>/etc/sysctl.conf
+sysctl -a |grep arp_ann
+echo "net.ipv4.conf.all.arp_announce = 2">>/etc/sysctl.conf
+echo "net.ipv4.conf.lo.arp_announce = 2">>/etc/sysctl.conf
+
+在调度器上,配置规则
+ipvsadm -A -t 192.168.1.222:80 -s lc
+ipvsadm -a -t 192.168.1.222:80 -r 192.168.1.2 -g (路由模式，默认)
+ipvsadm -a -t 192.168.1.222:80 -r 192.168.1.3
+ipvsadm -Ln
+systemctl status ipvsadm
+systemctl start ipvsadm
+
+如果启动ipvsadm启动时报错
+ipvsadm-save-n >/etc/sysconfig/ipvsadm
+systemctl start ipvsadm
+
+手动关闭80端口
+ipvsadm -Ln
+
+ipvsadm -d -t 192.168.1.222:80 -r 192.168.1.3
+
+手动开启80端口
+ipvsadm -a -t 192.168.1.222:80 -r 192.168.1.3
+
+systemctl restart ipvsadm
+systemctl enable ipvsadm
+
+手动加载删除非常麻烦，也不人性化
+
+
+vim monitor_web.sh
+VIP=192.168.1.222:80
+RIP1=192.168.1.2
+RIP2=192.168.1.3
+
+while [ : ]
+do
+for ip in $RIP1 $RIP2
+do
+curl http://$ip &> /dev/null
+web_health=$?
+ipvsadm -Ln |grep $ip &> /dev/null
+web_in_lvs=$?
+if [ $web_health -ne 0 -a $web_in_lvs -eq 0 ];then
+	ipvsadm -d -t $VIP -r $ip
+elif [ $web_health -eq 0 -a $web_in_lvs -ne 0 ];then
+	ipvsadm -a -t $VIP -r $ip
+fi
+done
+sleep 3
+done
+--------------------------------------------------------------------------------------
+bash monitor_web.sh &
+watch -n1 ipvsadm -Ln
+
+======================================================================================
+HAProxy
+适用于高负载的web站点
+
+HAProxy工作模式
+mode http	客户端请求被深度分析后再发往web服务器
+mode tcp	客户端与服务器之前建立会话，不检查第七层信息
+mode health 	仅做健康状态检查，已经不建议使用
+
+
+HTTP事务模型
+HTTP协议事务驱动的
+每个请求仅能对应一个响应
+常见模型
+-HTTP close
+-Keep-alive
+-Pipelining
+
+代理：
+正向代理：帮助客户端缓存服务器上的数据
+反向代理：帮助服务器缓存数据
+
+HAProxy:
+1 安装
+yum -y install haproxy
+2 修改配置文件
+vim /etc/haproxy/haproxy.cfg
+# main frontend which proxys to the backends
+以后部分注释
+增加以下内容
+定义一个监控页面
+listen gzq
+  bind 0.0.0.0:1080 		#监听端口
+  stats refresh 30s 		#刷新时间为30秒
+  stats uri /gzq  		#统计页面url
+  stats realm Haproxy Manager	#页面提示信息
+  stats auth admin:admin	#设置页面用户名密码
+  stats hide-version		#隐藏页面上的HAProxy版本信息
+
+listen web-discuz 0.0.0.0:80
+  cookie SERVERID rewrite	#用cookie记录服务信息	
+  balance roundrobin		#负载均衡方式为轮询 
+  server web1 192.168.1.12:80 cookie a1i1 check inter 2000 rise 2 fall 5
+# 添加服务器web1，ip地址192.168.1.12:80端口，缓存应用1实例1，检查时间2000毫秒，判定状态信息成功2次，失败为5次
+  server web2 192.168.1.13:80 cookie a1i2 check inter 2000 rise 2 fall 5
+# 添加服务器web1，ip地址192.168.1.13:80端口，缓存应用1实例2，检查时间2000毫秒，判定状态信息成功2次，失败为5次
+
+3 启动服务
+systemctl restart haproxy.service
+netstat -tlnp |grep :80
+journalctl -xe
+
+4 访问服务器查看负载均衡轮询调度
+http://176.19.4.56:1080/
+http://176.19.4.56:1080/gzq	#查看监控页面需要跟端口
+tail -f /var/log/messages	#查询日志 
+
+5 配置4.56为日志服务器，以便于可以接收到haproxy通过网络发来的日志
+logger -h 
+直接记录本机日志
+logger "my gzqstca log"
+tail -2 /var/log/message/
+
+
+可以执行logger命令，向syslog写日志，测试如
+logger "my gzqstca log"
+tail -2 /var/log/message/
+vim /etc/rsyslog.conf		#日志存放规则文件
+接收基于UDP,TCP端口信息至/var/log/message log日志中
+ 14 # Provides UDP syslog reception
+ 15 $ModLoad imudp
+ 16 $UDPServerRun 514
+ 17 
+ 18 # Provides TCP syslog reception
+ 19 $ModLoad imtcp
+ 20 $InputTCPServerRun 514
+
+systemctl restart rsyslog
+
+======================================================================================
+
+高可用集群：
+
+Keepalived
+
+Keepalived开始是为LVS设计的，专门监控各服务器节点的状态
+Keepalived后来加入VRRP（虚拟冗余路由协议 ）功能，防止单点故障
+VRRP:		虚拟冗余路由协议 
+HA：		高可用
+双机热备：keepalived
+一 实现高可用的WEB集群
+1 拓扑：两台web服务器，一台数据库服务器。
+2 在web服务器上安装keepalived
+yum -y install keepalived
+3 修改配置文件
+vim /etc/keepalived/keepalived.conf
+# 14    vrrp_strict	(不注释会开启iptable防火墙)
+ 19 vrrp_instance VI_1 {            
+ 20     state MASTER                #所属角色（从属服务器改为BACKUP）
+ 21     interface eth0              #对应网卡接口
+ 22     virtual_router_id 51        #虚拟路由器ID
+ 23     priority 150        	    #设备优先级（从属优先级降低）
+ 24     advert_int 1      	    #通道的间隔（相当于路由器上的心跳消息）
+ 29     virtual_ipaddress {
+ 30         192.168.1.200
+ 31     }   
+
+4 启动服务
+systemctl restart keepalived
+
+5 查看虚拟路由状态
+ip a s eth0
+
+6 停用web1的keepalived
+虚拟路由ip会被转移至web2
+
+======================================================================================
+主机A　B　
+A WEB主 DB备
+B DB主 	WEB备
+
+Keepalived+Lvs
+Proxy 1
+Proxy 2
+WEB 1 
+WEB 2
+
+1 Proxy1~2
+yum -y install ipvsadm keepalived
+不要在调度器上手动配置VIP，VIP由Keepalived决定出现在那台调度器上
+如果有清除配置 
+ifdown eth0:0
+rm -f /etc/sysconfig/network-scripts/ifcfg-eth0:0
+
+2 Web1~2
+lo上配置VIP
+配置内核参数
+在WEB服务器lo:0上配置VIP
+cp /etc/sysconfig/network-scripts/ifcfg-lo{,:0}
+vim /etc/sysconfig/network-scripts/ifcfg-lo:0
+DEVICE=lo:0
+IPADDR=192.168.1.222
+NETMASK=255.255.255.255
+NETWORK=192.168.1.222
+BROADCAST=192.168.1.222
+ONBOOT=yes
+NAME=lo:0
+
+ifup lo:0
+ifconfig
+
+在WEB服务器上修改内核参数
+sysctl -a |grep arp_ig
+echo "net.ipv4.conf.all.arp_ignore = 1">>/etc/sysctl.conf
+echo "net.ipv4.conf.lo.arp_ignore = 1">>/etc/sysctl.conf
+sysctl -a |grep arp_ann
+echo "net.ipv4.conf.all.arp_announce = 2">>/etc/sysctl.conf
+echo "net.ipv4.conf.lo.arp_announce = 2">>/etc/sysctl.conf
+
+如果有LVS规则，手动清除,因为规则应该由Keepalived配置
+ipvsadm -D -t 192.168.1.100:80
+
+3 修改调度器配置proxy1~2
+netstat -tlnp|grep :25			#查看邮件端口
+vim /etc/keepalived/keepalived.conf
+
+  3 global_defs {
+  4    notification_email {
+  5         gzqstca@126.com				#设置报警邮件接收人
+  6     }
+  7    notification_email_from admin@server.cn		#决定由谁来发送邮件
+  8    smtp_server 127.0.0.1
+  9    smtp_connect_timeout 30
+ 10    router_id LVS_DEVEL
+ 11    vrrp_skip_check_adv_addr
+ 12 #  vrrp_strict
+ 13    vrrp_garp_interval 0
+ 14    vrrp_gna_interval 0
+ 15 }
+
+ 17 vrrp_instance VI_1 {
+ 18     state MASTER    
+ 19     interface eth0  
+ 20     virtual_router_id 51
+ 21     priority 150        
+ 22     advert_int 1        
+ 23     authentication {    
+ 24         auth_type PASS
+ 25         auth_pass 1111
+ 26     }   
+ 27     virtual_ipaddress {
+ 28         192.168.1.100
+ 29     }   
+ 30 } 
+
+ 32 virtual_server 192.168.1.100 80 {
+ 33     delay_loop 6
+ 34     lb_algo rr
+ 35     lb_kind DR 
+ 36     persistence_timeout 50      #50秒以内同一用户访问，同一台服务器回馈信息
+ 37     protocol TCP
+ 38     
+ 39     real_server 192.168.1.12 80 {
+ 40         weight 1
+ 41         TCP_CHECK {			#CHECK后面必需加空格，加空格，加空格
+ 42             connect_timeout 3
+ 43             nb_get_retry 3
+ 44             delay_before_retry 3
+ 45         }   
+ 46     }       
+ 47     real_server 192.168.1.13 80 {
+ 48          weight 1
+ 49          TCP_CHECK {   		#CHECK后面必需加空格，加空格，加空格
+ 50          connect_timeout 3
+ 51          nb_get_retry 3
+ 52          delay_before_retry 3
+ 53          }
+ 54      }
+ 55 }
+
+后面的全删除
