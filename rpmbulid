@@ -1,0 +1,68 @@
+mkdir /aabb
+cd /aabb
+yumdownloader http
+rpm2cpio httpd-2.4.6-67.el7.x86_64.rpm |cpio -id
+ls
+
+先在本机安装nginx，配置相关参数，做优化，并压缩该包命令为nginx-1.12.2.tar.gz
+
+
+yum -y install rpm-bulid
+yum -y install gcc c++
+rpmbulid -ba nginx.spec		会报错，并在当前目录生成rpmbulid目录
+ls /root/rpmbulid
+BUILD		RPMS(放最终的rpm包)	SPECS
+BUILDROOT	SOURCES(放源码包)	SRPMS
+
+cp nginx-1.12.2.tar.gz /root/rpmbulid/SOURCES/	把nginx的源码包复制到/rpmbulid/SOURCES/
+vim /root/rpmbuild/SPECS/nginx.spec		新建nginx程序的spec文件，会产生默认配置
+
+Name:nginx					名字必需跟SOURCES内的源码包名字一致
+Version:1.12.2					版本号必需跟SOURCES内的源码包版本一致
+Release:	填第几次制作RPM包，随便写	
+Summary:	该软件的描述信息，随便写
+
+Group:		#注释即可
+License:GPL	该软件是免费
+URL:		网址随便写
+Source0:nginx-1.12.2.tar.gz			名字必需跟SOURCES内的源码包名字一致
+
+BuildRequires:
+Requires:	填写依赖包名称，不解决依赖关系，可注释
+%description
+This is a web server nginx!!!	软件包的详细描述
+
+以上基本信息 rpm -qi 命令可以查看
+
+%prep
+%setup -q	解tar包cd进去
+
+
+%build
+./configure --with-......	把默认%configure改成./configure；并添加nginx模块
+make %{?_smp_mflags}
+
+%install 
+make install DESTDIR=%{buildroot}
+
+%files
+%doc
+/usr/local/nginx/*		对/usr/local/nginx/下所有的文件打包
+
+
+%changelog
+
+编辑完毕
+
+
+rpmbuild -ba /root/rpmbuild/SPECS/nginx.spec
+rpmbuild -ba nginx.spec
+===========================================================================================
+*******************************************************************************************
+===========================================================================================
+cd /root/rpmbuild/SOURCES	制作yum源安装包
+createrepo .
+
+
+
+
