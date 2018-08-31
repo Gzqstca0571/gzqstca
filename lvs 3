@@ -361,3 +361,8 @@ vim /etc/keepalived/keepalived.conf
  55 }
 
 后面的全删除
+
+启动服务
+systemctl start keepalived
+ip a s eth0
+ipvsadm -Ln
