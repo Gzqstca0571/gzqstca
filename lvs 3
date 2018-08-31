@@ -364,5 +364,7 @@ vim /etc/keepalived/keepalived.conf
 
 启动服务
 systemctl start keepalived
+systemctl enable keepalived
+
 ip a s eth0
 ipvsadm -Ln
