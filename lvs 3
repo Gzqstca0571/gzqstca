@@ -321,10 +321,10 @@ vim /etc/keepalived/keepalived.conf
  15 }
 
  17 vrrp_instance VI_1 {
- 18     state MASTER    
+ 18     state MASTER    				#主的是MASTER，主备是BACKUP
  19     interface eth0  
- 20     virtual_router_id 51
- 21     priority 150        
+ 20     virtual_router_id 51				
+ 21     priority 150        				#主的优先级是150，主备优先级调低为100	
  22     advert_int 1        
  23     authentication {    
  24         auth_type PASS
