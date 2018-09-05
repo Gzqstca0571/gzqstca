@@ -1,0 +1,60 @@
+#Centos7
+#jenkins，jdk安装
+wget http://download.oracle.com/otn-pub/java/jdk/8u181-b13/96a7b8442fe848ef90c96a2fad6ed6d1/jdk-8
+u181-linux-x64.rpm?AuthParam=1535945934_22e0b854febff6f2395a5dce8857a179
+mv jdk-8u181-linux-x64.rpm\?AuthParam\=1535945934_22e0b854febff6f2395a5dce8857a179 jdk-8u181-linux-x64.rpm
+yum -y install jdk-8u181-linux-x64.rpm 
+java -version
+wget -O /etc/yum.repos.d/jenkins.repo https://pkg.jenkins.io/redhat/jenkins.repo
+rpm --import https://pkg.jenkins.io/redhat/jenkins.io.key
+yum clean all
+yum makecache
+yum install -y jenkins
+
+#修改配置文件，创建用户名为admin，访问端口为8888
+sed -i "s/JENKINS_USER=.*/JENKINS_USER=\"admin\"/" /etc/sysconfig/jenkins
+sed -i "s/JENKINS_PORT=.*/JENKINS_PORT=\"8888\"/" /etc/sysconfig/jenkins
+systemctl start jenkins
+systemctl enable jenkins
+
+#git安装
+yum -y install curl-devel expat-devel gettext-devel openssl-devel zlib-devel
+yum -y install gcc perl-ExtUtils-MakeMaker
+wget https://mirrors.edge.kernel.org/pub/software/scm/git/git-2.9.5.tar.gz
+tar -xf git-2.9.5.tar.gz
+cd git-2.9.5
+./configure prefix=/usr/local/git
+make prefix=/usr/local/git all
+make prefix=/usr/local/git install
+echo "export PATH=$PATH:/usr/local/git/bin" >> /etc/bashrc
+source /etc/bashrc
+git --version
+
+#maven安装
+wget http://mirrors.tuna.tsinghua.edu.cn/apache/maven/maven-3/3.5.4/binaries/apache-maven-3.5.4-bin.tar.gz  
+tar -xf apache-maven-3.5.4-bin.tar.gz 
+mv apache-maven-3.5.4/ /usr/local/apache-maven
+echo "export M3_HOME=/usr/local/apache-maven" >>/etc/profile
+echo "export PATH=${M3_HOME}/bin:${PATH}" >>/etc/profile
+source /etc/profile
+mvn –version
+
+点击系统管理->全局工具配置,配置jdk，git,maven的根目录
+JDK安装
+别名		jdk
+JAVA_HOME	/usr/java/jdk1.8.0_181-amd64
+
+Git安装
+NAME			git
+Path to Git executable	/usr/local/git
+
+maven安装
+Name		apache-maven
+MAVEN_HOME	/usr/local/apache-maven	
+
+系统管理->插件管理 ,安装以下插件
+GitHub Organization Folder
+Javadoc
+Maven Integration
+GitHub Authentication
+Deploy to container
