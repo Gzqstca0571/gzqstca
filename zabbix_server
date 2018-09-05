@@ -1,0 +1,86 @@
+yum -y install gcc pcre-devel  openssl-devel
+tar -xf nginx-1.12.2.tar.gz 
+cd nginx-1.12.2/
+./configure --with-http_ssl_module
+make&&make install
+yum -y install php php-mysql mariadb mariadb-devel mariadb-server php-fpm
+
+sed  -i "65c location ~ \.php$ {"  /usr/local/nginx/conf/nginx.conf
+sed  -i "66c  root           html;"  /usr/local/nginx/conf/nginx.conf
+sed  -i "67c  fastcgi_pass   127.0.0.1:9000;"  /usr/local/nginx/conf/nginx.conf
+sed  -i "68c  fastcgi_index  index.php;"  /usr/local/nginx/conf/nginx.conf
+sed  -i "70c  include        fastcgi.conf;"  /usr/local/nginx/conf/nginx.conf
+sed  -i "71c  }"  /usr/local/nginx/conf/nginx.conf
+
+sed -i "18a 	fastcgi_buffers 8 16k;"  /usr/local/nginx/conf/nginx.conf
+sed -i "19a 	fastcgi_buffer_size 32k;"  /usr/local/nginx/conf/nginx.conf
+sed -i "20a 	fastcgi_connect_timeout 300;"  /usr/local/nginx/conf/nginx.conf
+sed -i "21a 	fastcgi_send_timeout 300;"  /usr/local/nginx/conf/nginx.conf
+sed -i "22a 	fastcgi_read_timeout 300;"  /usr/local/nginx/conf/nginx.conf
+
+systemctl start mariadb php-fpm 
+ln -s /usr/local/nginx/sbin/nginx /sbin/nginx
+nginx
+
+yum -y install net-snmp-devel curl-devel
+yum -y install libevent-devel-2.0.21-4.el7.x86_64.rpm
+
+tar -xf zabbix-3.4.4.tar.gz
+cd zabbix-3.4.4/
+./configure  --enable-server --enable-proxy --enable-agent --with-
+
+mysql=/usr/bin/mysql_config --with-net-snmp --with-libcurl
+make && make install
+
+mysql -uroot -p123456 -e "set password for root@localhost=password('654321');"
+mysqldump -uroot -p654321 mysql user > /backup/mysql/user.sql 
+mysql -uroot -p654321 -e "delete from mysql.user where password='';"
+mysql -uroot -p654321 -e "create database zabbix character set utf8;"
+mysql -uroot -p654321 -e "grant all on zabbix.* to zabbix@'localhost' identified by 
+
+'zabbix';"
+
+mysql -uzabbix -pzabbix zabbix < /root/lnmp_soft/zabbix-3.4.4/database/mysql/schema.sql
+mysql -uzabbix -pzabbix zabbix < /root/lnmp_soft/zabbix-3.4.4/database/mysql/images.sql
+mysql -uzabbix -pzabbix zabbix < /root/lnmp_soft/zabbix-3.4.4/database/mysql/data.sql
+
+cp -rf /root/lnmp_soft/zabbix-3.4.4/frontends/php/* /usr/local/nginx/html
+chmod -R 777 /usr/local/nginx/html/*
+
+
+sed -i "85c	 DBHost=localhost" /usr/local/etc/zabbix_server.conf
+sed -i "95c	 DBName=zabbix"	 /usr/local/etc/zabbix_server.conf
+sed -i "111c	 DBUser=zabbix"	 /usr/local/etc/zabbix_server.conf
+sed -i "119c 	 DBPassword=zabbix" /usr/local/etc/zabbix_server.conf
+sed -i "38c	 LogFile=/tmp/zabbix_server.log" /usr/local/etc/zabbix_server.conf
+
+useradd -s /sbin/nologin zabbix
+
+sed -i "93c Server=127.0.0.1,192.168.60.128" /usr/local/etc/zabbix_agentd.conf
+sed -i "134c ServerActive=127.0.0.1,192.168.60.128" /usr/local/etc/zabbix_agentd.conf
+sed -i "145c Hostname=Zabbix server" /usr/local/etc/zabbix_agentd.conf
+sed -i "30c LogFile=/tmp/zabbix_agentd.log" /usr/local/etc/zabbix_agentd.conf
+sed -i "280c UnsafeUserParameters=0" /usr/local/etc/zabbix_agentd.conf
+
+zabbix_agentd
+echo "nginx" >>/etc/rc.d/rc.local
+echo "zabbix_server" >>/etc/rc.d/rc.local
+echo "zabbix_agentd" >>/etc/rc.d/rc.local
+systemctl enable mariadb mariadb.server
+systemctl enable php-fpm 
+
+yum -y install  php-gd php-xml
+yum install php-bcmath*.rpm
+yum install php-mbstring*.rpm
+ 
+sed -i " 878c date.timezone = Asia/Shanghai" /etc/php.ini
+sed -i " 384c max_execution_time = 300" /etc/php.ini
+sed -i " 394c max_input_time = 300" /etc/php.ini
+sed -i " 672c post_max_size = 32M" /etc/php.ini
+sed -i " 119c max_input_time = 300" /etc/php.ini
+sed -i " 405c memory_limit = 128M" /etc/php.ini
+
+systemctl restart php-fpm
+
+free|awk '/Mem/{print $4}'
+uptime |awk '{print $9}'
