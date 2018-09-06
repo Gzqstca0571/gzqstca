@@ -29,4 +29,4 @@ setenforce 0
 systemctl stop firewalld
 yum -y remove firewalld
 echo "http://hostip/zabbix"
-echo ""
+echo "user:admin  password:zabbix"
