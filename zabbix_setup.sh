@@ -1,5 +1,7 @@
 echo "This is Zabbix server !!! make with Centos7,mariadb,apache"
+sleep 3
 echo "mysql password is: 13141516 you need remember!!!"
+sleep 3
 wget -O /etc/yum.repos.d/CentOS-Base.repo http://mirrors.aliyun.com/repo/Centos-7.repo
 #yum clean all
 #yum update
@@ -26,3 +28,5 @@ systemctl restart httpd
 setenforce 0
 systemctl stop firewalld
 yum -y remove firewalld
+echo "http://hostip/zabbix"
+echo ""
