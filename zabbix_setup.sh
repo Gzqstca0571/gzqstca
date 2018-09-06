@@ -1,6 +1,6 @@
 echo "This is Zabbix server !!! make with Centos7,mariadb,apache"
 echo "web is http://zabbix_host_ip/zabbix"
-echo "Zabbix_web username: admin  password: zabbix"
+echo "Zabbix_web username:admin  password:zabbix"
 read -p "push mysql password to continue:(you need remember!!!)" sqlpasswd
 wget -O /etc/yum.repos.d/CentOS-Base.repo http://mirrors.aliyun.com/repo/Centos-7.repo &>/dev/null
 #yum clean all
