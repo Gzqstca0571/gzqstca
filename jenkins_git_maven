@@ -1,9 +1,6 @@
 #Centos7
 #jenkins，jdk安装
-wget http://download.oracle.com/otn-pub/java/jdk/8u181-b13/96a7b8442fe848ef90c96a2fad6ed6d1/jdk-8
-u181-linux-x64.rpm?AuthParam=1535945934_22e0b854febff6f2395a5dce8857a179
-mv jdk-8u181-linux-x64.rpm\?AuthParam\=1535945934_22e0b854febff6f2395a5dce8857a179 jdk-8u181-linux-x64.rpm
-yum -y install jdk-8u181-linux-x64.rpm 
+yum -y install java-1.8.0-openjdk java-1.8.0-openjdk-devel 
 java -version
 wget -O /etc/yum.repos.d/jenkins.repo https://pkg.jenkins.io/redhat/jenkins.repo
 rpm --import https://pkg.jenkins.io/redhat/jenkins.io.key
