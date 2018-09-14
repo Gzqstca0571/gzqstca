@@ -9,8 +9,8 @@ yum makecache
 yum install -y jenkins
 
 #修改配置文件，创建用户名为admin，访问端口为8888
-useradd admin
-sed -i "s/JENKINS_USER=.*/JENKINS_USER=\"admin\"/" /etc/sysconfig/jenkins
+useradd jenkins
+sed -i "s/JENKINS_USER=.*/JENKINS_USER=\"jenkins\"/" /etc/sysconfig/jenkins
 sed -i "s/JENKINS_PORT=.*/JENKINS_PORT=\"8888\"/" /etc/sysconfig/jenkins
 systemctl start jenkins
 systemctl enable jenkins
