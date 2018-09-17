@@ -1,0 +1,70 @@
+server2:
+tar -xf mysql-5.7.17.tar 
+yum -y localinstall mysql-*
+systemctl start mysqld
+systemctl enable mysqld
+cat /var/log/mysqld.log |grep password
+mysql -uroot -p -e "set global validate_password_policy=0;"
+mysql -uroot -p -e "set global validate_password_length=6;"
+mysql -uroot -p -e "set password for root@localhost=password('123456');"
+
+在两台机器上添加一个用于从机访问的帐号, 赋予REPLICATION SLAVE权限.
+GRANT REPLICATION SLAVE ON *.* TO 'repl'@'%' IDENTIFIED BY 'slf_2018';
+
+server1:
+vim /etc/my.cnf
+server-id = 1
+log_bin = mysql-bin
+
+server2:
+vim /etc/my.cnf
+server-id = 2
+log_bin = mysql-bin
+
+
+server1 server2:
+systemctl restart mysqld
+
+首先关闭tomcat服务器：
+禁止修改数据库信息！！！
+
+server1 server2:
+FLUSH TABLES WITH READ LOCK;
+SHOW MASTER STATUS;
+
+server1:
+mysqldump -uroot -p --all-databases >all.sql
+scp all.sql server2:/root
+
+server2:
+mysql -uroot -p <all.sql
+
+
+server1:
+change master to master_host='10.0.1.5',master_user='repl',master_password='slf_2018',master_log_file="mysql-bin.0
+00001", master_log_pos=3087498;
+server2:
+change master to master_host='10.0.1.2',master_user='repl',master_password='slf_2018',master_log_file="mysql-bin.0
+00002", master_log_pos=1938;
+开启同步
+server1 server2:
+START SLAVE;
+unlock tables;
+
+
+验证正确性
+server1 server2
+SHOW SLAVE STATUS\G;
+
+#mysql 从服务器取消主从复制
+#stop slave;reset slave;
+#change master to master_host='127.0.0.1';
+
+server1:
+create table t1 (姓名 char(10) not null default "",年龄 tinyint(2) unsigned default 18,班级 char(7) default "nsd18
+01",性别 enum("男","女")) default charset=utf8;
+server2:
+create table t2 (姓名 char(10) not null default "",年龄 tinyint(2) unsigned default 18,班级 char(7) default "nsd18
+02",性别 enum("男","女")) default charset=utf8;
+
+开启tomcat服务器！！！
