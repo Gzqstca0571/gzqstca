@@ -119,7 +119,7 @@ NAME="eth0"
 ONBOOT=yes
 NETBOOT=yes
 IPV6INIT=yes
-BOOTPROTO=dhcp
+BOOTPROTO=none
 TYPE=Ethernet
 DEVICE="eth0"
 
