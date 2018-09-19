@@ -109,7 +109,7 @@ virt-manager
 拷贝真机yum源至虚拟机
 
 在虚拟机上安装所需的工具
-yum -y install net-tools vim-enhanced iproute bash-completion
+yum -y install net-tools vim-enhanced iproute bash-completion wget
 
 vi /etc/sysconfig/network
 NOZEROCONF="yes"
