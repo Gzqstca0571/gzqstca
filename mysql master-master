@@ -48,9 +48,11 @@ server2:
 change master to master_host='10.0.1.2',master_user='repl',master_password='slf_2018',master_log_file="mysql-bin.0
 00002", master_log_pos=1938;
 开启同步
-server1 server2:
+server1
 START SLAVE;
 unlock tables;
+server2:
+START SLAVE;
 
 
 验证正确性
