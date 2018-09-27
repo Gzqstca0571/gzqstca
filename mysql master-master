@@ -8,10 +8,10 @@ auto_increment_increment表示自增长字段每次递增的量，其默认值�
 这样才可以避免两台服务器同时做更新时自增长字段的值之间发生冲突。
 主1： 
 auto-increment-increment=2 
-auto-increment-offset=1 
+auto-increment-offset=100 
 主2： 
 auto-increment-increment=2 
-auto-increment-offset=2
+auto-increment-offset=101
 
 server2:
 tar -xf mysql-5.7.17.tar 
