@@ -1,3 +1,18 @@
+mysql中有自增长字段，在做数据库的主主同步时需要设置自增长的两个相关配置：
+auto_increment_offset和auto_increment_increment。
+
+auto_increment_offset表示自增长字段从那个数开始，他的取值范围是1 .. 65535
+auto_increment_increment表示自增长字段每次递增的量，其默认值是1，取值范围是1 .. 65535
+在主主同步配置时，需要将两台服务器的auto_increment_increment增长量都配置为2，而要把auto_increment_offset分别配置为1和2.
+
+这样才可以避免两台服务器同时做更新时自增长字段的值之间发生冲突。
+主1： 
+auto-increment-increment=2 
+auto-increment-offset=1 
+主2： 
+auto-increment-increment=2 
+auto-increment-offset=2
+
 server2:
 tar -xf mysql-5.7.17.tar 
 yum -y localinstall mysql-*
