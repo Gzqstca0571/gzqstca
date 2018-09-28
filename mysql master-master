@@ -76,8 +76,8 @@ server1 server2
 SHOW SLAVE STATUS\G;
 
 #mysql 从服务器取消主从复制
-#stop slave;reset slave;
-#change master to master_host='127.0.0.1';
+stop slave;reset slave;
+change master to master_host='127.0.0.1';
 
 server1:
 create table t1 (姓名 char(10) not null default "",年龄 tinyint(2) unsigned default 18,班级 char(7) default "nsd18
