@@ -7,7 +7,6 @@ auto_increment_increment表示自增长字段每次递增的量，其默认值�
 alter table nsd.t1 auto_increment=151;
 这样才可以避免两台服务器同时做更新时自增长字段的值之间发生冲突。
 主1： 
-
 SET @@auto_increment_offset=200;
 SET @@auto_increment_increment=2;
 
