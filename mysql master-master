@@ -4,14 +4,15 @@ auto_increment_offset和auto_increment_increment。
 auto_increment_offset表示自增长字段从那个数开始，他的取值范围是1 .. 65535
 auto_increment_increment表示自增长字段每次递增的量，其默认值是1，取值范围是1 .. 65535
 在主主同步配置时，需要将两台服务器的auto_increment_increment增长量都配置为2，而要把auto_increment_offset分别配置为1和2.
-
+alter table nsd.t1 auto_increment=151;
 这样才可以避免两台服务器同时做更新时自增长字段的值之间发生冲突。
 主1： 
-alter table nsd.t1 auto_increment=150;
+
+SET @@auto_increment_offset=200;
 SET @@auto_increment_increment=2;
 
 主2： 
-alter table nsd.t1 auto_increment=151;
+SET @@auto_increment_offset=201;
 SET @@auto_increment_increment=2;
 
 server2:
