@@ -1,0 +1,76 @@
+mysql社区repo：https://repo.mysql.com/
+Centos6.5下安装mysql5.6
+1. 下载mysql官方社区版repo
+  wget http://repo.mysql.com/mysql-community-release-el6-5.noarch.rpm
+  安装该rpm会产生2个yum镜像。
+2. 检查是否已有安装mysql，mariadb,如果有卸载，并删除/var/lib/mysql
+3. 安装 yum install mysql-community-server
+4.  安装如果报错libc.so.6和libstdc.so.6是因为该库是32位，查找出该库的包卸载，重新编译新版本的gcc，会产生该库，删除原来的的软连接，重新指向新的库。
+5. 重启service mysqld start
+6.   chkconfig mysqld on
+  
+Centos6.5下安装mysql5.7
+1. wget https://repo.mysql.com//mysql57-community-release-el6-11.noarch.rpm
+2. 做新yum
+3.  yum install mysql-community-server
+4 . 重启service mysqld start
+  chkconfig mysqld on
+5.查找密码登陆
+ 
+
+
+源码包安装
+准备安装包：mysql-5.6.35-linux-glibc2.5-x86_64.tar.gz
+# tar  -xvf  mysql-5.6.35-linux-glibc2.5-x86_64.tar.gz  -C  /usr/local
+# mv /usr/local/mysql-5.6.35-linux-glibc2.5-x86_64   /usr/local/mysql
+# groupadd mysql
+# useradd -r -g mysql mysql -d /usr/local/mysql
+# passwd mysql
+# chown -R mysql:mysql /usr/local/mysql
+# su mysql
+$ /usr/local/mysql/scripts/mysql_install_db --user=mysql --basedir=/usr/local/mysql --datadir=/usr/local/mysql/data
+# cp /usr/local/mysql/support-files/my-default.cnf /etc/my.cnf
+# cp /usr/local/mysql/support-files/mysql.server /etc/init.d/mysql
+# chkconfig --add mysql
+# chkconfig mysql on
+# echo 'export MYSQL_HOME="/usr/local/mysql"'   >>  /etc/profile
+# echo 'export PATH="$PATH:$MYSQL_HOME/bin"'  >>   /etc/profile
+# source /etc/profile
+# vim /etc/my.cfg
+port=3306
+server_id=100
+log-bin=host100
+binlog-format="mixed"
+# validate_password_policy=0
+# validate_password_length=6
+log-error=/var/log/mysqld.log
+slow_query_log = on
+slow-query-log-file=/usr/local/mysql/log/slow-query.log
+long_query_time = 1
+datadir=/usr/local/mysql/data
+socket=/tmp/mysql.sock
+lower_case_table_names=1
+symbolic-links=0
+# skip-grant-tables
+# service mysql start
+# mysql
+mysql> update user set password=password('123456') where user='root';
+mysql> SET PASSWORD FOR 用户名 @'客户端地址'=PASSWORD('新密码');
+ 
+数据备份：
+安装包准备：percona-xtrabackup-22-2.2.13-1.el6.x86_64.rpm
+# yum-y install libaio perl perl-devel  perl-Time-HiRes perl-DBD-MySQL perl-IO-Socket-SSL perl-Digest-MD5 libev rsync
+# yum -y localinstall percona-xtrabackup-22-2.2.13-1.el6.x86_64.rpm
+完全备份：
+# innobackupex --user root --host '127.0.0.1' --password 123456 --databases="information_schema mysql performance_schema test f10_test_ops"  /root/MysqlDataBak/alldata  --no-timestamp
+完全备份恢复：
+# innobackupex --user root --host '127.0.0.1' --password 123456 --databases="information_schema mysql performance_schema test f10_test_ops"  --apply-log  /root/MysqlDataBak/alldata
+# rm -rf /usr/local/mysql/data/*
+# innobackupex --user root --host '127.0.0.1' --password 123456 --databases="information_schema mysql performance_schema test f10_test_ops"  --copy-back  /root/MysqlDataBak/alldata
+增量备份：
+# innobackupex --user root --host 127.0.0.1 --password 123456 --databases=" information_schema mysql performance_schema test  f10_test_ops" --incremental /tmp/newdir/ --incremental-basedir=/root/MysqlDataBak/alldata --no-timestamp
+ 
+link：
+https://www.cnblogs.com/xubiao/p/7832165.html
+mysql.sock文件介绍：
+https://blog.csdn.net/thanklife/article/details/69225724
