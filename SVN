@@ -7,16 +7,14 @@
 
 subversion(svn),git
 
-
+tar -xf hashpower.tar.gz;
 yum -y install subversion
 mkdir /var/svn
-svnadmin create /var/svn/project
-cd /usr/lib/systemd/system
-#ls *httpd*
-#ll -R|wc -l
-du -sh /var/svn/project/
-svn import . file:///var/svn/project -m "gzqstca code"
-du -sh /var/svn/project/
+svnadmin create /var/svn/hashpower
+cd /hashpower
+du -sh /var/svn/hashpower/
+svn import . file:///var/svn/hashpower -m "hashpower code"
+du -sh /var/svn/hashpower/
 
 cd /var/svn/project/conf
 
@@ -25,24 +23,24 @@ authz  passwd  svnserve.conf  (从右往左改)
 
 vim svnserve.conf
 set nu (19,20,27,34)顶格去掉注释
-19 anon-access = none 	（匿名用户权限为空）
-20 auth-access = write	（登录用户权限为写）
-27 password-db = passwd	（登录用户信息在那）
+19 anon-access = none 	      （匿名用户权限为空）
+20 auth-access = write	      （登录用户权限为写）
+27 password-db = passwd	     （登录用户信息在那）
 34 authz-db = authz
 
 vim passwd
 user1 = 123456
 user2 = 123456
-user3 = 123456	(添加用户密码)
+user3 = 123456	               (添加用户密码)
 
 vim authz
 
-[/]		(针对/var/svn/project目录)
-user1 = rw	user1用读写权限
-user2 = r	user2有读权限
-* =		其它user3无任何权限
+[/]		                         (针对/var/svn/project目录)
+user1 = rw	                   user1用读写权限
+user2 = r	                    user2有读权限
+* =		                         其它user3无任何权限
 
-#1[root@web1 conf]# svnserve -d（不加-d相当于&会放置后台） -r（指定共享目录） /var/svn/project  （针对/var/svn/project仓库目录启服务）
+#1[root@web1 conf]# svnserve -d（不加-d相当于&会放置后台） -r（指定共享目录） /var/svn/hashpower  （针对/var/svn/project仓库目录启服务）
 #2[root@web1 conf]# svnserve -d	（启用所有共享仓库）
 [root@web1 conf]# ss -antupl|grep svnserve
 tcp    LISTEN     0      7         *:3690                  *:*                   users:(("svnserve",pid=3856,fd=3))
