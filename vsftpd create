@@ -5,18 +5,18 @@ echo “user01”>/etc/vsftpd/ftpusers.txt
 echo “123456”>>/etc/vsftpd/ftpusers.txt	
 echo “user02”>>/etc/vsftpd/ftpusers.txt
 echo “123456”>>/etc/vsftpd/ftpusers.txt
- 
-echo “user01”>/etc/vsftpd/chroot_list	#创建虚拟用户user01
-echo “user02”>>/etc/vsftpd/chroot_list	#创建虚拟用户user02
-
-db_load  -T  -t  hash  -f  ftpusers.txt  vsftpd_login.db #生成虚拟用户数据库认证文件
-chmod 700 vsftpd_login.db	#设置为root读写执行，其它---
+#创建虚拟用户user01,user02
+echo “user01”>/etc/vsftpd/chroot_list
+echo “user02”>>/etc/vsftpd/chroot_list
+#生成虚拟用户数据库认证文件,	设置为root读写执行，其它---
+db_load  -T  -t  hash  -f  ftpusers.txt  vsftpd_login.db 
+chmod 700 vsftpd_login.db
 
 #配置PAM认证文件
 echo “auth required pam_userdb.so db=/etc/vsftpd/vsftpd_login”>/etc/pam.d/vsftpd
 echo “account required pam_userdb.so db=/etc/vsftpd/vsftpd_login”>>/etc/pam.d/vsftpd
-
-useradd –s /sbin/nologin ftpuser	#创建ftp的管理员，别设密码
+#创建ftp的管理员，别设密码
+useradd –s /sbin/nologin ftpuser	
 echo “#config virtual user FTP”>>/etc/vsftpd/vsftpd.conf
 echo “pam_service_name=vsftpd” >>/etc/vsftpd/vsftpd.conf
 echo “guest_enable=YES” >>/etc/vsftpd/vsftpd.conf
