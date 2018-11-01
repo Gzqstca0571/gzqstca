@@ -6,7 +6,7 @@ echo "user01">/etc/vsftpd/ftpusers.txt
 echo "123456">>/etc/vsftpd/ftpusers.txt	
 echo "user02">>/etc/vsftpd/ftpusers.txt
 echo "234567">>/etc/vsftpd/ftpusers.txt
-#创建虚拟用户user01,user02
+#创建虚拟用户user01,user02用户列表
 echo "user01">/etc/vsftpd/chroot_list
 echo "user02">>/etc/vsftpd/chroot_list
 #生成虚拟用户数据库认证文件,设置为root读写执行，其它---
@@ -37,7 +37,7 @@ echo "#listen_port=8021">>/etc/vsftpd/vsftpd.conf   #根据实际情况变更ftp
 mkdir –p /home/ftpuser/user0{1,2}		#创建以虚拟用户名命名的目录
 chown –R ftpuser:ftpuser /home/ftpuser	#对ftpuser目录赋权
 
-编辑vsftpd.conf
+#编辑vsftpd.conf
 anonymous_enable=NO	           #禁止匿名用户
 local_enable=YES		           #允许本地用户使用
 write_enable=YES		           #允许写入
