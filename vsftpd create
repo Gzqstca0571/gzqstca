@@ -36,17 +36,17 @@ mkdir –p /home/ftpuser/user0{1,2}		#创建以虚拟用户名称命名的目录
 chown –R ftpuser:ftpuser /home/ftpuser	#对ftpuser目录赋权
 
 编辑vsftpd.conf
-anonymous_enable=NO	#禁止匿名用户
-local_enable=YES		#允许本地用户使用
-write_enable=YES		#允许写入
+anonymous_enable=NO	           #禁止匿名用户
+local_enable=YES		           #允许本地用户使用
+write_enable=YES		           #允许写入
 local_umask=022
 dirmessage_enable=YES
 xferlog_enable=YES
 connect_from_port_20=YES
 xferlog_std_format=YES
-chroot_local_user=YES		#虚拟用户限制在主目录下的用户名单
-allow_writeable_chroot=YES		#锁定用户家目录
-chroot_list_enable=YES		#启用虚拟用户列表文件
+chroot_local_user=YES		       #虚拟用户限制在主目录下的用户名单
+allow_writeable_chroot=YES	   #锁定用户家目录
+chroot_list_enable=YES		     #启用虚拟用户列表文件
 chroot_list_file=/etc/vsftpd/chroot_list	#虚拟用户列表文件路径
 listen=NO	
 listen_ipv6=YES
