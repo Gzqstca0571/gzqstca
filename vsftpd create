@@ -68,7 +68,7 @@ pasv_promiscuous=YES
 #listen_port=8021	变更ftp服务器默认端口
 
 mkdir /etc/vsftpd/vsftpd_user_conf
-
+mkdir /WEB/user0{1,2}
 vim /etc/vsftpd/vsftpd_user_conf/user01
 echo "local_root=/WEB/user01">/etc/vsftpd/vsftpd_user_conf/user01
 echo "write_enable=YES">>/etc/vsftpd/vsftpd_user_conf/user01
