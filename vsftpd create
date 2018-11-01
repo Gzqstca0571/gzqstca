@@ -9,8 +9,8 @@ echo “123456”>>/etc/vsftpd/ftpusers.txt
 echo “user01”>/etc/vsftpd/chroot_list
 echo “user02”>>/etc/vsftpd/chroot_list
 #生成虚拟用户数据库认证文件,设置为root读写执行，其它---
-db_load  -T  -t  hash  -f  ftpusers.txt  vsftpd_login.db 
-chmod 700 vsftpd_login.db
+db_load  -T  -t  hash  -f  /etc/vsftpd/ftpusers.txt  /etc/vsftpd/vsftpd_login.db 
+chmod 700 /etc/vsftpd/vsftpd_login.db
 
 #配置PAM认证文件
 echo "#%PAM-1.0">/etc/pam.d/vsftpd
