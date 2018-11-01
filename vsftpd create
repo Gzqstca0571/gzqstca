@@ -84,3 +84,5 @@ echo "anon_mkdir_write_enable=YES">>/etc/vsftpd/vsftpd_user_conf/user02
 echo "anon_other_write_enable=YES">>/etc/vsftpd/vsftpd_user_conf/user02
 
 systemctl restart vsftpd
+
+用xftp访问ftp服务器,在选项栏的“选项”-传输-使用被动模式（勾选项勾掉）
