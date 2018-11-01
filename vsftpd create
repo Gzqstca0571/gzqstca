@@ -1,4 +1,5 @@
 yum -y install  pam* libdb* 	#安装vsftpd虚拟用户需要用到的认证模块
+yum -y install vsftpd
 echo “user01”>ftpusers.txt	#奇数行用户名
 echo “123456”>>ftpusers.txt	#偶数行该用户所登录的密码
 echo “user02”>>ftpusers.txt	#奇数行用户名
