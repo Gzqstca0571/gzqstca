@@ -21,18 +21,18 @@ echo “account required pam_userdb.so db=/etc/vsftpd/vsftpd_login”>>/etc/pam.
 useradd –s /sbin/nologin ftpuser	
 echo “#config virtual user FTP”>>/etc/vsftpd/vsftpd.conf
 echo “pam_service_name=vsftpd” >>/etc/vsftpd/vsftpd.conf
-echo “guest_enable=YES” >>/etc/vsftpd/vsftpd.conf
-echo “guest_username=ftpuser” >>/etc/vsftpd/vsftpd.conf
-echo “user_config_dir=/etc/vsftpd/vsftpd_user_conf” >>/etc/vsftpd/vsftpd.conf
-echo “virtual_use_local_privs=YES” >>/etc/vsftpd/vsftpd.conf
+echo “guest_enable=YES”>>/etc/vsftpd/vsftpd.conf
+echo “guest_username=ftpuser”>>/etc/vsftpd/vsftpd.conf
+echo “user_config_dir=/etc/vsftpd/vsftpd_user_conf”>>/etc/vsftpd/vsftpd.conf
+echo “virtual_use_local_privs=YES”>>/etc/vsftpd/vsftpd.conf
 #如果是云计算机，开放相对应的网络安全组对应端口，按下面的配置应开放1024/2048端口
 echo “pasv_enable=YES”>>/etc/vsftpd/vsftpd.conf
 echo “pasv_address=FTP服务器的被访问IP地址>>/etc/vsftpd/vsftpd.conf
-echo “pasv_min_port=1024” >>/etc/vsftpd/vsftpd.conf
-echo “pasv_max_port=2048” >>/etc/vsftpd/vsftpd.conf
-echo “pasv_promiscuous=YES” >>/etc/vsftpd/vsftpd.conf
+echo “pasv_min_port=1024”>>/etc/vsftpd/vsftpd.conf
+echo “pasv_max_port=2048”>>/etc/vsftpd/vsftpd.conf
+echo “pasv_promiscuous=YES”>>/etc/vsftpd/vsftpd.conf
 #如果是云计算机，开放相对应的网络安全组对应端口，按下面的配置应开放8021端口
-echo “#listen_port=8021” >>/etc/vsftpd/vsftpd.conf   #根据实际情况变更ftp服务器访问端口
+echo “#listen_port=8021”>>/etc/vsftpd/vsftpd.conf   #根据实际情况变更ftp服务器访问端口
 
 mkdir –p /home/ftpuser/user0{1,2}		#创建以虚拟用户名称命名的目录
 chown –R ftpuser:ftpuser /home/ftpuser	#对ftpuser目录赋权
