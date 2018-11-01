@@ -1,12 +1,12 @@
 yum -y install  pam* libdb* 	#安装vsftpd虚拟用户需要用到的认证模块
 yum -y install vsftpd
-echo “user01”>ftpusers.txt	#奇数行用户名
-echo “123456”>>ftpusers.txt	#偶数行该用户所登录的密码
-echo “user02”>>ftpusers.txt	#奇数行用户名
-echo “123456”>>ftpusers.txt	#偶数行该用户所登录的密码
+echo “user01”>/etc/vsftpd/ftpusers.txt	#奇数行用户名
+echo “123456”>>/etc/vsftpd/ftpusers.txt	#偶数行该用户所登录的密码
+echo “user02”>>/etc/vsftpd/ftpusers.txt	#奇数行用户名
+echo “123456”>>/etc/vsftpd/ftpusers.txt	#偶数行该用户所登录的密码
  
-echo “user01”> chroot_list	#创建虚拟用户user01
-echo “user02”>>chroot_list	#创建虚拟用户user02
+echo “user01”>/etc/vsftpd/chroot_list	#创建虚拟用户user01
+echo “user02”>>/etc/vsftpd/chroot_list	#创建虚拟用户user02
 
 db_load  -T  -t  hash  -f  ftpusers.txt  vsftpd_login.db #生成虚拟用户数据库认证文件
 chmod 700 vsftpd_login.db	#设置为root读写执行，其它---
