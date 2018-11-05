@@ -56,7 +56,7 @@ remote_port = 8389
 custom_domains = windows.gzqstca.cn
 
 win+R cmd
-cd frp
+cd frp目录下
 frpc.exe
 程序自动启动
 
