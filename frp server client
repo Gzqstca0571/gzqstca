@@ -14,7 +14,7 @@ vhost_http_port = 8888
 auth_token = ******
 
 nohup /usr/local/frp/frps -c /usr/local/frp/frps.ini &
-
+echo "nohup /usr/local/frp/frps -c /usr/local/frp/frps.ini &">>/etc/rc.local
 frp客户端操作步骤：
 tar -xvf frp_0.21.0_linux_amd64.tar.gz 
 mv frp_0.21.0_linux_amd64 /usr/local/frp
@@ -40,6 +40,7 @@ remote_port = 8021
 custom_domains = test.gzqstca.cn
 
 nohup /usr/local/frp/frpc -c /usr/local/frp/frpc.ini &
+echo "nohup /usr/local/frp/frpc -c /usr/local/frp/frpc.ini &">>/etc/rc.local
 
 windows
 用notepad++编辑 frpc.ini
@@ -62,3 +63,4 @@ frpc.exe
 
 外网电脑开启远程访问
 windows.gzqstca.cn:8389
+添加计划任务
