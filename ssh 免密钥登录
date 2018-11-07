@@ -1,0 +1,4 @@
+PC机A ssh-keygen生成公钥
+PC机A scp /root/.ssh/id_rsa.pub 到 PC机B
+PC机B cat id_rsa.pub>>/root/.ssh/authorized_keys
+实现PC机A 免密钥 登录 PC机B
