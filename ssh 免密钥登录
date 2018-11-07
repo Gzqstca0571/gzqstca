@@ -2,3 +2,11 @@ PC机A ssh-keygen生成公钥
 PC机A scp /root/.ssh/id_rsa.pub 到 PC机B
 PC机B cat id_rsa.pub>>/root/.ssh/authorized_keys
 实现PC机A 免密钥 登录 PC机B
+
+
+ssh-keygen -t rsa
+>/root/.ssh/authorized_keys 生成身份认证文件
+将主机B 公钥拷贝到 主机A
+cat PCB_rsa.pub>>/root/.ssh/authorized_keys
+保留并备份 主机B的私钥
+在任意PC上使用主机B的私钥，都能正常访问主机A
