@@ -75,7 +75,7 @@ vim /backup/frp.sh
 if [ -n `ps -aux|grep frps|awk "/Sl/{print $8}"` ];then
 nohup /usr/local/frp/frps -c /usr/local/frp/frps.ini &
 else
-echo "Frp服务器端已开启"
+exit
 fi
 
 chmod +x /backup/frp.sh
@@ -88,7 +88,7 @@ vim /backup/frp.sh
 if [ -n `ps -aux|grep frps|awk "/Sl/{print $8}"` ];then
 nohup /usr/local/frp/frpc -c /usr/local/frp/frpc.ini &
 else
-echo "Frp客户端已开启"
+exit
 fi
 
 chmod +x /backup/frp.sh
