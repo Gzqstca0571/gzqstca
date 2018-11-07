@@ -23,7 +23,7 @@ cd /usr/local/frp
 vim /usr/local/frp/frpc.ini
 
 [common]
-server_addr = 47.99.199.119
+server_addr = frp服务端公网ip
 server_port = 7000
 auto_token = ******
 [ssh]
@@ -67,7 +67,10 @@ windows.gzqstca.cn:8389
 
 
 附Linux下脚本启动
+crontab -e 计划任务
+*/1 * * * * /backup/frp.sh
 服务器判断条件
+vim /backup/frp.sh
 #!/bin/bash
 if [ -n `ps -aux|grep frps|awk "/Sl/{print $8}"` ];then
 nohup /usr/local/frp/frps -c /usr/local/frp/frps.ini &
@@ -75,11 +78,17 @@ else
 echo "Frp服务器端已开启"
 fi
 
+chmod +x /backup/frp.sh
 
 客户端判断条件
+crontab -e 计划任务
+*/1 * * * * /backup/frp.sh
+vim /backup/frp.sh
 #!/bin/bash
 if [ -n `ps -aux|grep frps|awk "/Sl/{print $8}"` ];then
 nohup /usr/local/frp/frpc -c /usr/local/frp/frpc.ini &
 else
 echo "Frp客户端已开启"
 fi
+
+chmod +x /backup/frp.sh
