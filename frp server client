@@ -64,3 +64,22 @@ frpc.exe
 外网电脑开启远程访问
 windows.gzqstca.cn:8389
 添加计划任务
+
+
+附Linux下脚本启动
+服务器判断条件
+#!/bin/bash
+if [ -n `ps -aux|grep frps|awk "/Sl/{print $8}"` ];then
+nohup /usr/local/frp/frps -c /usr/local/frp/frps.ini &
+else
+echo "Frp服务器端已开启"
+fi
+
+
+客户端判断条件
+#!/bin/bash
+if [ -n `ps -aux|grep frps|awk "/Sl/{print $8}"` ];then
+nohup /usr/local/frp/frpc -c /usr/local/frp/frpc.ini &
+else
+echo "Frp客户端已开启"
+fi
