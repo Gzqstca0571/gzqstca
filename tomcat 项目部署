@@ -1,0 +1,22 @@
+客户机
+vim warclient.sh
+#!/bin/bash
+scp /VFTP/user01/formally/*.war slf.one:/wartest/
+ssh slf.one bash /backup/warserver.sh
+
+chmod +x warclient.sh
+ln -s /backup/warclient.sh /sbin/warclient.sh
+
+服务端
+vim /backup/warserver.sh
+#!/bin/bash
+if [ -f /wartest/*.war ];then
+rm -rf /root/data/tomcat8/webapps/ROOT/*
+mv /wartest/*.war /root/data/tomcat8/webapps/ROOT/
+cd /root/data/tomcat8/webapps/ROOT
+pkill -9 java
+jar -xvf *.war
+/root/data/tomcat8/bin/startup.sh
+fi
+
+chmod +x /backup/war.sh
