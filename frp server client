@@ -45,7 +45,7 @@ echo "nohup /usr/local/frp/frpc -c /usr/local/frp/frpc.ini &">>/etc/rc.local
 windows
 用notepad++编辑 frpc.ini
 [common]
-server_addr = 47.99.199.119
+server_addr = frp的服务器外网地址
 server_port = 7000
 auto_token = ******
 
