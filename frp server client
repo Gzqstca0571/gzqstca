@@ -64,7 +64,22 @@ frpc.exe
 外网电脑开启远程访问
 windows.gzqstca.cn:8389
 添加计划任务
-
+创建一个run.bat批处理文件
+@echo off
+mode con cols=60 lines=20
+color a
+title 服务监听工具
+:frpc
+echo.
+echo frpc 1 启动完成
+echo.
+D:\frp\frpc.exe -c d:\frp\frpc.ini
+echo.
+echo 服务进程不见了，即将重启
+echo.
+ping -n 2 127.1 >nul
+cls
+goto frpc
 
 附Linux下脚本启动
 crontab -e 计划任务
