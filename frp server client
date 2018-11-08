@@ -83,9 +83,9 @@ goto frpc
 
 附Linux下脚本启动
 crontab -e 计划任务
-*/1 * * * * /backup/frp.sh
+*/1 * * * * /var/frp.sh
 服务器判断条件
-vim /backup/frp.sh
+vim /var/frp.sh
 #!/bin/bash
 if [ -n `ps -aux|grep frps|awk "/Sl/{print $8}"` ];then
 nohup /usr/local/frp/frps -c /usr/local/frp/frps.ini &
@@ -97,8 +97,8 @@ chmod +x /backup/frp.sh
 
 客户端判断条件
 crontab -e 计划任务
-*/1 * * * * /backup/frp.sh
-vim /backup/frp.sh
+*/1 * * * * /var/frp.sh
+vim /var/frp.sh
 #!/bin/bash
 if [ -n `ps -aux|grep frpc|awk "/Sl/{print $8}"` ];then
 nohup /usr/local/frp/frpc -c /usr/local/frp/frpc.ini &
