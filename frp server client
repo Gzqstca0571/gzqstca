@@ -87,7 +87,7 @@ crontab -e 计划任务
 服务器判断条件
 vim /var/frp.sh
 #!/bin/bash
-if [ -n `ps -aux|grep frps|awk "/Sl/{print $8}"` ];then
+if [ -n `ps -aux|grep frps|awk "/S*l/{print $8}"` ];then
 nohup /usr/local/frp/frps -c /usr/local/frp/frps.ini &
 else
 exit
@@ -100,7 +100,7 @@ crontab -e 计划任务
 */1 * * * * /var/frp.sh
 vim /var/frp.sh
 #!/bin/bash
-if [ -n `ps -aux|grep frpc|awk "/Sl/{print $8}"` ];then
+if [ -n `ps -aux|grep frpc|awk "/S*l/{print $8}"` ];then
 nohup /usr/local/frp/frpc -c /usr/local/frp/frpc.ini &
 else
 exit
