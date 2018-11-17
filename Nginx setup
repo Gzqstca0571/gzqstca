@@ -9,6 +9,8 @@ cd /root/nginx-1.10.3
 --prefix=/usr/local/nginx \
 --user=nginx \
 --group=nginx \
+--with-stream \
+--with-http_stub_status_module \
 --with-http_ssl_module				#安装ssl加密功能模块
 make&make install
 ln -s /usr/local/nginx/sbin/nginx /sbin/	#创建nginx的快捷方式
