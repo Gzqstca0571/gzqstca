@@ -1,0 +1,142 @@
+a. 安装 MySQL 数据库
+ yum -y install https://repo.zabbix.com/zabbix/3.4/rhel/7/x86_64/zabbix-release-3.4-2.el7.noarch.rpm
+
+b. 安装Zabbix server，Web前端，agent
+yum install zabbix-server-mysql zabbix-web-mysql zabbix-agent
+
+c. 创建初始数据库
+MariaDB [mysql]> set password for root@"%"=password('87646637');
+OR MariaDB [mysql]> grant all on *.* to root@"%" identified by '87646637' WITH GRANT OPTION;
+MariaDB [mysql]> delete from mysql.user where password="";
+MariaDB [(none)]> create database zabbix character set utf8 collate utf8_bin;
+MariaDB [(none)]> grant all privileges on zabbix.* to zabbix@localhost identified by “zabbix123”;
+vi /etc/zabbix/zabbix_server.conf
+DBHost=localhost
+DBName=zabbix
+DBUser=zabbix
+DBPassword=zabbix123
+
+zcat /usr/share/doc/zabbix-server-mysql*/create.sql.gz | mysql -uzabbix -p”zabbix123” zabbix
+
+vim /etc/httpd/conf.d/zabbix.conf
+20         php_value date.timezone Asia/Shanghai
+vim /etc/php.ini	根据提示修改参数
+systemctl restart zabbix-server zabbix-agent httpd
+systemctl enable zabbix-server zabbix-agent httpd
+修改zabbix登录密码：
+[root@gao_server ~]# echo -n  87646637  | openssl md5
+(stdin)= 540ec9046a2875640ec02724bb57ca99
+update users set passwd="540ec9046a2875640ec02724bb57ca99" where userid='1';
+访问帐号Admin 注意大小写
+密码zabbix
+
+yum -y install https://repo.zabbix.com/zabbix/3.4/rhel/7/x86_64/zabbix-release-3.4-2.el7.noarch.rpm
+yum -y install zabbix-agent
+vim /etc/zabbix/zabbix_agentd.conf 
+97 Server=ali.gzqstca.cn
+138 ServerActive=ali.gzqstca.cn
+149 Hostname=ali_gzqstca server
+
+systemctl start zabbix-agent.service
+zabbix 源码安装
+yum -y install gcc gcc-c++ autoconf libjpeg libjpeg-devel libpng libpng-devel freetype freetype-devel libxml2 libxml2-devel zlib zlib-devel glibc glibc-devel glib2 glib2-devel bzip2 bzip2-devel ncurses ncurses-devel curl curl-devel e2fsprogs e2fsprogs-devel krb5-devel libidn libidn-devel openssl openssl-devel nss_ldap openldap openldap-devel  openldap-clients openldap-servers libxslt-devel libevent-devel ntp  libtool-ltdl bison libtool vim-enhanced
+yum install -y net-snmp-devel
+groupadd zabbix
+useradd -g zabbix zabbix
+cd /backup/zabbix-3.4.15
+./configure --enable-server --enable-agent --with-mysql --enable-ipv6 --with-net-snmp --with-libcurl --with-libxml2
+make install
+
+vim /usr/local/etc/zabbix_agentd.conf
+Server=47.99.199.119
+ServerActive=47.99.199.119
+Hostname=Zabbix server
+
+vim /usr/local/etc/zabbix_server.conf
+DBName=zabbix
+DBUser=zabbix
+DBPassword=zabbix123
+
+安装Zabbix web界面
+复制PHP文件
+Zabbix前端使用PHP写的，所以必须运行在PHP支持的Web服务器上。只需要简单的从frontends/php路径下复制PHP文件到Web服务器的HTML文件目录，就可以完成安装。
+cp /backup/zabbix-3.4.15/frontends/php/* /usr/local/nginx/html/
+
+Zabbix 微信告警设置流程：
+一、申请企业微信
+
+1、填写注册信息
+
+
+
+二、配置微信企业号
+
+1、创建告警组，然后把接受消息人加进来
+2、记录账号名称，等下填写接收人信息需要用到
+3、点击我的企业，查看企业信息，要记录企业CorpID
+4、点击企业应用，创建应用
+5、填写信息和通知用户组
+6、创建完，记录Agentld和Secret
+三、配置zabbix服务器
+1、首先确认已经记录的信息
+告警组用户的账号，企业CorpID和创建应用的Secret、Agentld
+2、修改zabbix.conf
+[root@localhost ~]# grep alertscripts /etc/zabbix/zabbix_server.conf 
+# AlertScriptsPath=${datadir}/zabbix/alertscripts
+AlertScriptsPath=/usr/lib/zabbix/alertscripts
+我们设置zabbix默认脚本路径，这样在web端就可以获取到脚本
+3、下载并设置脚本
+[root@localhost ~]# cd /usr/lib/zabbix/alertscripts/
+[root@localhost alertscripts]#wget http://download.zhsir.org/Zabbix/weixin_linux_amd64
+--2018-06-16 12:31:52--  http://download.zhsir.org/Zabbix/weixin_linux_amd64
+正在解析主机 download.zhsir.org (download.zhsir.org)... 101.200.208.210
+正在连接 download.zhsir.org (download.zhsir.org)|101.200.208.210|:80... 已连接。
+已发出 HTTP 请求，正在等待回应... 200 OK
+长度：3579488 (3.4M) [application/octet-stream]
+正在保存至: “weixin_linux_amd64”
+100%[============================================================================================================>] 3,579,488   1.98MB/s 用时 1.7s   
+2018-06-16 12:31:55 (1.98 MB/s) - 已保存 “weixin_linux_amd64” [3579488/3579488])
+[root@localhost alertscripts]# mv weixin_linux_amd64 wechat
+[root@localhost alertscripts]# chmod 755 wechat 
+[root@localhost alertscripts]# chown zabbix:zabbix wechat 
+4、执行脚本进行测试
+[root@localhost alertscripts]# ./wechat --corpid=xxx --corpsecret=xxx --msg="您好，告警测试" --user=用户账号 --agentid=xxx
+{"errcode":0,"errmsg":"ok","invaliduser":""}
+
+提示：
+--corpid= 我们企业里面的id
+--corpsecret= 这里就是我们Secret里面的id
+-msg= 内容
+-user=我们邀请用户的账号
+因为脚本是编译过的，无法进行编辑，我们可以使用./wechat -h or --help 查看
+四、zabbix web页面配置告警信息
+1、管理-报警媒介类型-创建告警媒介
+2、填写报警媒介信息
+--corpid=我们企业里面的id
+--corpsecret=这里就是我们Secret里面的id
+--agentid= Agentld ID
+--user={ALERT.SENDTO}
+--msg={ALERT.MESSAGE}
+3、设置告警用户
+4、设置告警动作
+1）动作信息
+2）填写告警时候操作信息
+故障告警:{TRIGGER.STATUS}: {TRIGGER.NAME} 
+告警主机:{HOST.NAME} 
+主机地址:{HOST.IP} 
+告警时间:{EVENT.DATE} {EVENT.TIME} 
+告警等级:{TRIGGER.SEVERITY} 
+告警信息:{TRIGGER.NAME} 
+问题详情:{ITEM.NAME}:{ITEM.VALUE} 
+事件代码:{EVENT.ID} 
+3）填写恢复操作信息
+故障解除:{TRIGGER.STATUS}: {TRIGGER.NAME} 
+恢复主机:{HOST.NAME} 
+主机地址:{HOST.IP} 
+恢复时间:{EVENT.DATE} {EVENT.TIME} 
+恢复等级:{TRIGGER.SEVERITY} 
+恢复信息:{TRIGGER.NAME} 
+问题详情:{ITEM.NAME}:{ITEM.VALUE} 
+事件代码:{EVENT.ID}
+5、手动触发告警，测试微信接收信息
+6、微信客户端
