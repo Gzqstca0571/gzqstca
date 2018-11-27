@@ -11,6 +11,7 @@ vim /usr/local/frp/frps.ini
 [common]
 bind_port = 7000
 max_pool_count = 50
+vhost_ssh_port = 8022
 vhost_http_port = 8080
 Authentication_timeout = 900
 auto_token = ******
