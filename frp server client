@@ -10,8 +10,11 @@ vim /usr/local/frp/frps.ini
 
 [common]
 bind_port = 7000
-vhost_http_port = 8888
-auth_token = ******
+max_pool_count = 50
+vhost_http_port = 8080
+Authentication_timeout = 900
+auto_token = ******
+
 
 nohup /usr/local/frp/frps -c /usr/local/frp/frps.ini &
 echo "nohup /usr/local/frp/frps -c /usr/local/frp/frps.ini &">>/etc/rc.local
@@ -26,18 +29,19 @@ vim /usr/local/frp/frpc.ini
 server_addr = frp服务端公网ip
 server_port = 7000
 auto_token = ******
-[ssh]
+[ssh110]
 type = tcp
 local_ip = 127.0.0.1
 local_port = 22
-remote_port = 8022
+remote_port = 9022
 custom_domains = test.gzqstca.cn
-[ftp]
-type = tcp
+[web1]
+type = http
 local_ip = 127.0.0.1
-local_port = 21
-remote_port = 8021
+local_port = 80
+remote_port = 8080
 custom_domains = test.gzqstca.cn
+
 
 nohup /usr/local/frp/frpc -c /usr/local/frp/frpc.ini &
 echo "nohup /usr/local/frp/frpc -c /usr/local/frp/frpc.ini &">>/etc/rc.local
