@@ -92,8 +92,8 @@ crontab -e 计划任务
 服务器判断条件
 vim /var/frp.sh
 #!/bin/bash
-frppid=`ps -aux|grep frps|grep -v grep|awk '{print $5}'`
-if [ -z "$frppid" ];then
+pid=`ps -aux|grep "frp" |grep -Ev "grep|run" | awk '{print $4}'`
+if [ -n "$pid" ];then
 nohup /usr/local/frp/frps -c /usr/local/frp/frps.ini &
 fi
 
@@ -105,8 +105,8 @@ crontab -e 计划任务
 */1 * * * * /var/frp.sh
 vim /var/frp.sh
 #!/bin/bash
-frppid=`ps -aux|grep frp|grep -v grep|awk '{print $4}'`
-if [ -z "frppid" ];then
+pid=`ps -aux|grep "frp" |grep -Ev "grep|run" | awk '{print $4}'`
+if [ -n "$pid" ];then
 nohup /usr/local/frp/frpc -c /usr/local/frp/frpc.ini &
 fi
 
