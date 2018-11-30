@@ -30,7 +30,7 @@ update users set passwd="540ec9046a2875640ec02724bb57ca99" where userid='1';
 访问帐号Admin 注意大小写
 密码zabbix
 
-yum -y install https://repo.zabbix.com/zabbix/3.4/rhel/7/x86_64/zabbix-release-3.4-2.el7.noarch.rpm
+rpm -i https://repo.zabbix.com/zabbix/3.4/rhel/7/x86_64/zabbix-release-3.4-2.el7.noarch.rpm
 yum -y install zabbix-agent
 vim /etc/zabbix/zabbix_agentd.conf 
 97 Server=ali.gzqstca.cn
