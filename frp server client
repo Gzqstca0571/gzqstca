@@ -93,7 +93,7 @@ crontab -e 计划任务
 vim /var/frp.sh
 #!/bin/bash
 pid=`ps -aux|grep "frp" |grep -Ev "grep|run" | awk '{print $4}'`
-if [ -n "$pid" ];then
+if [ -z "$pid" ];then
 nohup /usr/local/frp/frps -c /usr/local/frp/frps.ini &
 fi
 
@@ -106,7 +106,7 @@ crontab -e 计划任务
 vim /var/frp.sh
 #!/bin/bash
 pid=`ps -aux|grep "frp" |grep -Ev "grep|run" | awk '{print $4}'`
-if [ -n "$pid" ];then
+if [ -z "$pid" ];then
 nohup /usr/local/frp/frpc -c /usr/local/frp/frpc.ini &
 fi
 
