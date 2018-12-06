@@ -11,6 +11,8 @@ if [ ! -z '$ip' ];then
 fi
 done
 
+sed -i "s/^#MaxAuthTries=.*/MaxAuthTries=3/" /etc/ssh/sshd_config
+
 crontab -e
 */1 * * * * /backup/denyssh.sh
 0 0 * * 1 echo "">/var/log/btmp
