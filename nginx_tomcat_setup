@@ -12,7 +12,7 @@ javac –version
 wget http://mirrors.hust.edu.cn/apache/tomcat/tomcat-8/v8.5.34/bin/apache-tomcat-8.5.34.tar.gz
 tar -xf apache-tomcat-8.5.34.tar.gz
 mv apache-tomcat-8.5.34/  /usr/local/tomcat8
-vim /us	r/local/tomcat8/conf/server.xml
+vim /usr/local/tomcat8/conf/server.xml
         <Executor
          name="tomcatThreadPool"
          namePrefix="catalina-exec-"
