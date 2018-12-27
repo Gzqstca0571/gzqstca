@@ -83,7 +83,7 @@ vim /usr/local/tomcat8/bin/catalina.sh
  
 
 
-rsync -avz --delete 47.99.175.198:/ /usr/local/tomcat8/webapps/ROOT/WEB-INF/logs/ykSales.log /usr/local/nginx/html/ykSales.log
+rsync -avz --delete 47.99.175.198:/usr/local/tomcat8/webapps/ROOT/WEB-INF/logs/ykSales.log /usr/local/nginx/html/ykSales.log
 
 
 nginx 监控
@@ -95,7 +95,20 @@ pip install ngxtop
 nginx setup:
 wget -O /etc/yum.repos.d/CentOS-Base.repo http://mirrors.aliyun.com/repo/Centos-7.repo
 yum -y install gcc pcre-devel openssl-devel
+wget -O /backup/nginx-1.15.3.tar.gz http://gzqstca.gz01.bdysite.com/software/nginx-1.15.3.tar.gz
 tar -xvf /backup/nginx-1.15.3.tar.gz
+
+useradd -s /sbin/nologin nginx
+cd安装目录
+./configure \
+--prefix=/usr/local/nginx \
+--user=nginx \
+--group=nginx \
+--with-http_ssl_module \
+--with-http_stub_status_module \
+--with-stream
+make&&make install
+
 vim /usr/local/nginx/conf/nginx.conf
 user nginx nginx;
 worker_processes  8;
