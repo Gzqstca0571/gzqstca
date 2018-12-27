@@ -67,8 +67,9 @@ ttf,application/x-font-otf,image/svg+xml,image/jpeg,image/png,image/gif,audio/mp
 yum install apr apr-devel openssl-devel  gcc make
 cd /usr/local/tomcat8/bin/
 tar xzfv tomcat-native.tar.gz
-/usr/local/tomcat8/bin/tomcat-native-1.2.17-src/native
-./configure --with-apr=/usr/bin/apr-1-config
+cd /usr/local/tomcat8/bin/tomcat-native-1.2.17-src/native
+./configure \
+--with-apr=/usr/bin/apr-1-config
 make && make install
 
 vim /usr/local/tomcat8/bin/catalina.sh
@@ -83,13 +84,13 @@ vim /usr/local/tomcat8/bin/catalina.sh
  
 
 
-rsync -avz --delete 47.99.175.198:/usr/local/tomcat8/webapps/ROOT/WEB-INF/logs/ykSales.log /usr/local/nginx/html/ykSales.log
+#rsync -avz --delete 47.99.175.198:/usr/local/tomcat8/webapps/ROOT/WEB-INF/logs/ykSales.log /usr/local/nginx/html/ykSales.log
 
 
-nginx 监控
-rpm -Uvh https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
-yum install python-pip
-pip install ngxtop
+#nginx 监控
+#rpm -Uvh https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+#yum install python-pip
+#pip install ngxtop
 
 
 nginx setup:
@@ -98,8 +99,9 @@ yum -y install gcc pcre-devel openssl-devel
 wget -O /backup/nginx-1.15.3.tar.gz http://gzqstca.gz01.bdysite.com/software/nginx-1.15.3.tar.gz
 tar -xvf /backup/nginx-1.15.3.tar.gz
 
+
 useradd -s /sbin/nologin nginx
-cd安装目录
+cd /backup/nginx-1.15.3
 ./configure \
 --prefix=/usr/local/nginx \
 --user=nginx \
