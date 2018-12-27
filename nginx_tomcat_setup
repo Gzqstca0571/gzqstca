@@ -1,15 +1,18 @@
-wget -O /etc/yum.repos.d/CentOS-Base.repo http://mirrors.aliyun.com/repo/Centos-7.repo
-yum -y install gcc pcre-devel openssl-devel
-yum –y install java-1.8.0*
-vim /etc/profile
-JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.181-3.b13.el7_5.x86_64/
-CLASSPATH=.:$JAVA_HOME/lib/tools.jar:$JAVA_HOME/lib/dt.jar
-PATH=$JAVA_HOME/bin:$HOME/bin:$HOME/.local/bin:$PATH
-source /etc/profile
+#wget -O /etc/yum.repos.d/CentOS-Base.repo http://mirrors.aliyun.com/repo/Centos-7.repo
+#yum -y install gcc pcre-devel openssl-devel
+#yum –y install java-1.8.0*
+#vim /etc/profile
+#JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.181-3.b13.el7_5.x86_64/
+#CLASSPATH=.:$JAVA_HOME/lib/tools.jar:$JAVA_HOME/lib/dt.jar
+#PATH=$JAVA_HOME/bin:$HOME/bin:$HOME/.local/bin:$PATH
+#source /etc/profile
+wget -O /backup/jdk-8u191-linux-x64.rpm http://gzqstca.gz01.bdysite.com/software/jdk-8u191-linux-x64.rpm
+yum -y install /backup/jdk-8u191-linux-x64.rpm
 #检测
 java -version
 javac –version
-wget http://mirrors.hust.edu.cn/apache/tomcat/tomcat-8/v8.5.34/bin/apache-tomcat-8.5.34.tar.gz
+#wget http://mirrors.hust.edu.cn/apache/tomcat/tomcat-8/v8.5.34/bin/apache-tomcat-8.5.34.tar.gz
+wget -O /backup/apache-tomcat-8.5.34.tar.gz http://gzqstca.gz01.bdysite.com/software/apache-tomcat-8.5.34.tar.gz
 tar -xf apache-tomcat-8.5.34.tar.gz
 mv apache-tomcat-8.5.34/  /usr/local/tomcat8
 vim /usr/local/tomcat8/conf/server.xml
