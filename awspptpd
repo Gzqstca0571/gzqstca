@@ -20,6 +20,7 @@ systemctl restart pptpd
 chkconfig pptpd on
 #清空所有规则
 iptables -F
+
 iptables -t nat -A POSTROUTING -s 192.168.100.0/24 -o eth0 -j MASQUERADE
 iptables -A INPUT -p tcp -m tcp --dport 1723 -j ACCEPT
 iptables -A FORWARD -s 192.168.100.0/24 -o eth0 -j ACCEPT 
