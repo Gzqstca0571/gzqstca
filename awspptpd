@@ -13,7 +13,7 @@ else
    sed -i "s/net.ipv4.ip_forward = 0/net.ipv4.ip_forward = 1/" /etc/sysctl.conf
 fi
 sysctl -p
-#centos6用以下命令替换
+#centos6用以下命令替换systemctl restart pptpd
 #service iptables save
 
 systemctl restart pptpd
