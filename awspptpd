@@ -1,10 +1,10 @@
 yum install ppp
 wget http://gzqstca.gz01.bdysite.com/software/pptpd-1.4.0-1.el6.x86_64.rpm -O /root/pptpd.rpm
 yum -y install /root/pptpd.rpm
-sed -i "66c ms-dns 8.8.8.8" /etc/ppp/options.pptpd
-sed -i "67c ms-dns 8.8.4.4" /etc/ppp/options.pptpd
+sed -i "66c ms-dns 114.114.114.114" /etc/ppp/options.pptpd
+sed -i "67c ms-dns 8.8.8.8" /etc/ppp/options.pptpd
 sed -i "2a user01  pptpd   135792468        *" /etc/ppp/chap-secrets
-sed -i "3a gzqstca pptpd   135792468        *" /etc/ppp/chap-secrets
+sed -i "3a user02  pptpd   135792468        *" /etc/ppp/chap-secrets
 sed -i "102c localip 192.168.100.1" /etc/pptpd.conf
 sed -i "103c remoteip 192.168.100.150-200" /etc/pptpd.conf
 if [ `grep "net.ipv4.ip_forward" /etc/sysctl.conf|wc -l` == 0 ];then
