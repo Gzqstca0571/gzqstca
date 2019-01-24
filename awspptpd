@@ -12,16 +12,14 @@ if [ `grep "net.ipv4.ip_forward" /etc/sysctl.conf|wc -l` == 0 ];then
 else
    sed -i "s/net.ipv4.ip_forward = 0/net.ipv4.ip_forward = 1/" /etc/sysctl.conf
 fi
-
 sysctl -p
-service pptpd reload
+systemctl restart pptpd
 chkconfig pptpd on
 iptables -t nat -A POSTROUTING -s 192.168.100.0/24 -o eth0 -j MASQUERADE
 iptables -A INPUT -p tcp -m tcp --dport 1723 -j ACCEPT
 iptables -A FORWARD -s 192.168.100.0/24 -o eth0 -j ACCEPT 
 iptables -A FORWARD -d 192.168.100.0/24 -i eth0 -j ACCEPT
-systemctl restart pptpd
-systemctl start firewalld
+
 #service iptables save
 #chkconfig iptables on
 
