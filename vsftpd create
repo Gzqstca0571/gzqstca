@@ -25,7 +25,7 @@ echo "guest_enable=YES">>/etc/vsftpd/vsftpd.conf
 echo "guest_username=ftpuser">>/etc/vsftpd/vsftpd.conf
 echo "user_config_dir=/etc/vsftpd/vsftpd_user_conf">>/etc/vsftpd/vsftpd.conf
 echo "virtual_use_local_privs=YES">>/etc/vsftpd/vsftpd.conf
-#如果是云计算机，开放相对应的网络安全组对应端口，按下面的配置应开放1024/2048端口，暂定ftp服务器ip为 192.168.1.111
+#如果是云计算机，被动模式下开放相对应的网络安全组对应端口，按下面的配置应开放1024/2048端口，暂定ftp服务器ip为 192.168.1.111
 echo "pasv_enable=YES">>/etc/vsftpd/vsftpd.conf
 echo "pasv_address=192.168.1.111">>/etc/vsftpd/vsftpd.conf
 echo "pasv_min_port=1024">>/etc/vsftpd/vsftpd.conf
