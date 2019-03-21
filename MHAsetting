@@ -12,7 +12,7 @@ manager主机要求能够访问所有的mysql节点
 yum -y install perl-*.rpm
 
 在所有主机上添加授权监控用户
-grant all on *.* to root@"%" identified by "123456";
+grant all on *.* to admin@"%" identified by "135792468!ABC";
 
 在所有数据库服务器上安装mha-node包
 yum -y install perl-DBD-mysql perl-DBI
@@ -31,7 +31,7 @@ make&&make install
 配置主
 yum -y install mariadb mariadb-server
 systemctl restart mariadb mariadb-server
-mysql -e "set password=password('123456')"
+mysql -e "set password=password('135792468!ABC')"
 #mysql -e "set global relay_log_purge=off"	#把自动删除本机的中继日志文件设置为关闭
 
 vim /etc/my.cnf
@@ -43,9 +43,9 @@ plugin-load = "rpl_semi_sync_master=semisync_master.so;rpl_semi_sync_slave=semis
 rpl-semi-sync-master-enabled = 1	#开启半同步复制
 rpl-semi-sync-slave-enabled = 1
 
-mysql -uroot -p123456
-grant replication slave on *.* to root@"%" identified by '123456';
-grant all on *.* to repluser@"%" identified by '123456';
+mysql -uadmin -p135792468!ABC
+grant replication slave on *.* to admin@"%" identified by '135792468!ABC';
+grant all on *.* to repluser@"%" identified by '135792468!ABC';
 
 show master status\G
 MariaDB [(none)]> show master status\G
@@ -89,7 +89,7 @@ rpl-semi-sync-slave-enabled = 1
 
 
 mysql
-set password=password('123456')
+set password=password('135792468!ABC')
 change master to master_host='192.168.2.10',master_user='root',master_password='123456',master_log_
 file='mysql-bin.000002',master_log_pos=245; 
 
@@ -119,7 +119,7 @@ _______________________________________________________________________________
 one[root@node10..4 ~]# yum -y install /perl/perl-*.rpm
 
 all
-MariaDB [(none)]> grant all on *.* to root@"%" identified by '123456';
+MariaDB [(none)]> grant all on *.* to admin@"%" identified by '135792468!ABC';
 
 all
 [root@gzqstca mysql]# for i in 192.168.2.1{0..4}; do ssh $i yum -y install perl-DBD-mysql perl-DBI;
