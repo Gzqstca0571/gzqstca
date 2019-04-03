@@ -116,14 +116,16 @@ _______________________________________________________________________________
 [root@gzqstca mysql]# pwd
 /var/ftp/pub/mysql
 [root@gzqstca mysql]# for i in 192.168.2.1{0..4}; do ssh $i mkdir /perl; scp perl-*.rpm $i:/perl; d
-one[root@node10..4 ~]# yum -y install /perl/perl-*.rpm
+one
+[root@node10..4 ~]# yum -y install /perl/perl-*.rpm
 
 all
 MariaDB [(none)]> grant all on *.* to admin@"%" identified by '135792468!ABC';
 
 all
 [root@gzqstca mysql]# for i in 192.168.2.1{0..4}; do ssh $i yum -y install perl-DBD-mysql perl-DBI;
- done[root@gzqstca mysql]# for i in 192.168.2.1{0..4}; do scp mha4mysql-node-0.56-0.el6.noarch.rpm $i:/root;ssh $i yum -y install /root/mha4mysql-node-0.56-0.el6.noarch.rpm; done
+ done
+ [root@gzqstca mysql]# for i in 192.168.2.1{0..4}; do scp mha4mysql-node-0.56-0.el6.noarch.rpm $i:/root;ssh $i yum -y install /root/mha4mysql-node-0.56-0.el6.noarch.rpm; done
 _________________________________________________________________________
 _________________________________________________________________________
 
