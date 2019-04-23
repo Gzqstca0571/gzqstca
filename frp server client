@@ -105,10 +105,9 @@ crontab -e 计划任务
 */1 * * * * /var/frp.sh
 vim /var/frp.sh
 #!/bin/bash
-pid=`ps -aux|grep "frp" |grep -Ev "grep|run" | awk '{print $4}'`
-if [ -n "$pid" ];then
+pid=`ps -aux|grep -Ev "grep|Zs"|grep "frp"|wc -l`
+if [ $pid -eq 0 ];then
 nohup /usr/local/frp/frpc -c /usr/local/frp/frpc.ini &
-fi
-
+f
 
 chmod +x /backup/frp.sh
