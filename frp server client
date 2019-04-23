@@ -108,6 +108,6 @@ vim /var/frp.sh
 pid=`ps -aux|grep -Ev "grep|Zs"|grep "frp"|wc -l`
 if [ $pid -eq 0 ];then
 nohup /usr/local/frp/frpc -c /usr/local/frp/frpc.ini &
-f
+fi
 
 chmod +x /backup/frp.sh
