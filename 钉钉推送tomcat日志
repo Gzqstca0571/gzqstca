@@ -1,4 +1,4 @@
-客户端安
+客户端安装
 mkdir /backup&&cd /backup
 wget https://bootstrap.pypa.io/get-pip.py
 python get-pip.py
