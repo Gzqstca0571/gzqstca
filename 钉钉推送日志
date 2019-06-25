@@ -41,3 +41,8 @@ for line in file:
     x=int(x)
     if x>1000:
         msg(line)
+
+server.xml
+            <Valve className="org.apache.catalina.valves.AccessLogValve" directory="logs"
+               prefix="localhost_access_log." suffix=".txt"
+               pattern="%D %h %l %u %t &quot;%r&quot; %s %b &quot;%{Referer}i&quot; &quot;%{User-Agent}i&quot;" />
