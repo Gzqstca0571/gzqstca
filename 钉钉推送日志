@@ -1,0 +1,43 @@
+cat CutLog.sh 
+#!/bin/bash
+Num=`cat /backup/LogNum`
+Date=`date +%F`
+LogPath=/root/txlc/tomcatdev/logs/localhost_access_log.${Date}.txt
+sed -n ''$Num',$'p $LogPath > /backup/host.log
+python /backup/WebLog.py
+cat $LogPath |wc -l > /backup/LogNum
+
+
+cat WebLog.py 
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+ 
+import requests
+import json
+import sys
+import os
+ 
+headers = {'Content-Type': 'application/json;charset=utf-8'}
+api_url = "https://oapi.dingtalk.com/robot/send?access_token=5c0e809cb9beb7320c03bd95cce581b88aabd6f9133e3da56cbe76f469433c3a"
+ 
+def msg(text):
+    json_text= {
+     "msgtype": "text",
+        "text": {
+            "content": text
+        },
+        "at": {
+            "atMobiles": [
+                "1xxxxxxxxxxxxx"
+            ],
+            "isAtAll": False
+        }
+    }
+    print requests.post(api_url,json.dumps(json_text),headers=headers).content
+
+file=open('/backup/host.log','r')
+for line in file:
+    x=line.split(' ')[0]
+    x=int(x)
+    if x>1000:
+        msg(line)
