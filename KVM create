@@ -24,9 +24,9 @@ vim veth1.xml
 <name>veth1</name>
 <forward mode='nat'/>
 <bridge name='veth1'/>
-<ip address='192.168.1.254' netmask='255.255.255.0'>
+<ip address='192.168.10.254' netmask='255.255.255.0'>
 <dhcp>
-<range start='192.168.1.100' end='192.168.1.200'/>
+<range start='192.168.10.100' end='192.168.10.200'/>
 </dhcp>
 </ip>
 </network>
@@ -36,7 +36,7 @@ vim veth2.xml
 <name>veth2</name>
 <forward mode='nat'/>
 <bridge name='veth2'/>
-<ip address='192.168.2.254' netmask='255.255.255.0'>
+<ip address='192.168.20.254' netmask='255.255.255.0'>
 </ip>
 </network>
 
@@ -62,9 +62,9 @@ DEFROUTE=yes
 NAME=veth1
 DEVICE=veth1
 ONBOOT=yes
-IPADDR=192.168.1.254
+IPADDR=192.168.10.254
 PREFIX=24
-GATEWAY=192.168.1.254
+GATEWAY=192.168.10.254
 DNS1=114.114.114.114
 
 vim /etc/sysconfig/network-scripts/ifcfg-veth2
@@ -77,9 +77,9 @@ DEFROUTE=yes
 NAME=veth2
 DEVICE=veth2
 ONBOOT=no
-IPADDR=192.168.2.254
+IPADDR=192.168.20.254
 PREFIX=24
-GATEWAY=192.168.2.254
+GATEWAY=192.168.20.254
 DNS1=114.114.114.114
 
 定义虚拟网卡，并启用
@@ -184,9 +184,9 @@ read -p "请输入需要创建连续的主机数(1~)：" num
 ip=echo $cip|awk -F. '{print $4}'
 net=echo $cip|awk -F. '{print $1"."$2"."$3}'
 case $net in
-192.168.1)
+192.168.10)
 cnet=eth0;;
-192.168.2)
+192.168.20)
 cnet=eth1;;
 *)
 echo "错误的IP地址！"
