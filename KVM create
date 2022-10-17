@@ -9,6 +9,8 @@ virt-manager #图形管理工具
 virt-v2v #虚拟机迁移工具
 virt-p2v #物理机迁移工具
 
+yum -y install qemu-kvm libvirt-client libvirt-daemon libvirt-daemon-drive-qemu virt-install virt-manager virt-v2v virt-p2v
+
 在真机上添加一条路由转发，以方便后期的虚拟机访问外网
 vim /etc/sysctl.d/70-system.conf
 net.ipv4.ip_forward = 1
